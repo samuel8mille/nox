@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Nox — estados do avatar Íris</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@property --r{syntax:"<length>";inherits:false;initial-value:88px}
+@property --p{syntax:"<length>";inherits:false;initial-value:44px}
+
+@keyframes c-spin{to{transform:rotate(360deg)}}
+
+/* ============ 1. MERCURIO ============ */
+.m-wrap{position:absolute;inset:0;mix-blend-mode:screen}
+.m-goo{position:absolute;inset:0;background:#000;filter:blur(9px) contrast(22)}
+.m-tint{position:absolute;inset:0;mix-blend-mode:multiply;background:linear-gradient(165deg,#ffffff 0%,#c9d2ff 24%,#6f7fe0 42%,#161a4a 50%,#7d8cf0 56%,#dfe4ff 74%,#ffffff 100%);background-size:100% 240%;animation:m-tint 7s ease-in-out infinite alternate,m-hue 12s ease-in-out infinite alternate}
+@keyframes m-tint{from{background-position:0 0}to{background-position:0 100%}}
+@keyframes m-hue{from{filter:hue-rotate(-35deg)}to{filter:hue-rotate(45deg)}}
+.m-core{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px 0 0 -75px;background:#fff;border-radius:50%;animation:m-wob 7s ease-in-out infinite;transition:transform .7s cubic-bezier(.3,1.5,.5,1)}
+@keyframes m-wob{0%,100%{border-radius:50% 50% 50% 50% / 50% 50% 50% 50%}25%{border-radius:54% 46% 49% 51% / 48% 54% 46% 52%}50%{border-radius:47% 53% 55% 45% / 53% 47% 53% 47%}75%{border-radius:52% 48% 46% 54% / 46% 52% 48% 54%}}
+@keyframes m-talk{0%,100%{scale:1}20%{scale:1.05 .97}45%{scale:.97 1.04}70%{scale:1.04 .98}}
+.m-o{position:absolute;left:50%;top:50%;width:0;height:0;transform:rotate(var(--a));animation:m-rot var(--t) linear infinite}
+.m-drop{position:absolute;left:0;top:0;background:#fff;border-radius:50%;animation:m-in calc(var(--t)*.55) ease-in-out infinite alternate}
+@keyframes m-rot{from{transform:rotate(var(--a))}to{transform:rotate(calc(var(--a) + 360deg))}}
+@keyframes m-in{from{transform:translateX(var(--r1))}to{transform:translateX(var(--r2))}}
+@keyframes m-in-t{from{transform:translateX(calc(var(--r1)*.8))}to{transform:translateX(calc(var(--r2)*.72))}}
+@keyframes m-hop{0%,100%{transform:translateX(calc(var(--r2)*1.02))}35%{transform:translateX(calc(var(--r1)*.8))}60%{transform:translateX(calc(var(--r2)*.96))}}
+@keyframes m-absorb{0%{transform:translateX(135px) scale(.8);opacity:0}15%{opacity:1}80%{transform:translateX(52px) scale(.9)}100%{transform:translateX(18px) scale(.25)}}
+.m-listening .m-core{transform:scale(1.02,1.14) translateY(-4px)}
+.m-listening .m-o{animation:none}
+.m-listening .m-drop{animation:m-absorb 1.8s ease-in infinite;animation-delay:var(--dl)}
+.m-thinking .m-core{transform:scale(.58)}
+.m-thinking .m-o{animation-duration:calc(var(--t)*.22)}
+.m-thinking .m-drop{animation:m-in-t calc(var(--t)*.16) ease-in-out infinite alternate}
+.m-speaking .m-core{animation:m-wob 3s ease-in-out infinite,m-talk .8s ease-in-out infinite}
+.m-speaking .m-o{animation-duration:calc(var(--t)*1.6)}
+.m-speaking .m-drop{animation:m-hop .75s ease-in-out infinite;animation-delay:var(--dl)}
+.m-shadow{position:absolute;left:50%;bottom:14px;width:150px;height:18px;margin-left:-75px;border-radius:50%;background:radial-gradient(ellipse,rgba(127,140,255,.45),transparent 70%);filter:blur(4px);animation:m-sh 4s ease-in-out infinite}
+@keyframes m-sh{0%,100%{transform:scaleX(1);opacity:.8}50%{transform:scaleX(.8);opacity:.5}}
+.m-spec{position:absolute;left:50%;top:50%;margin:-64px 0 0 -46px;width:40px;height:16px;border-radius:50%;background:rgba(255,255,255,.75);filter:blur(3px);transform:rotate(-28deg);transition:transform .7s cubic-bezier(.3,1.5,.5,1)}
+.m-thinking .m-spec{transform:translate(16px,18px) rotate(-28deg) scale(.55)}
+.m-listening .m-spec{transform:translate(0,-10px) rotate(-28deg)}
+.m-eyes{position:absolute;left:0;right:0;top:50%;margin-top:-30px;display:flex;justify-content:center;transition:transform .25s ease-out}
+.m-ei{display:flex;gap:20px;transition:transform .5s ease}
+.m-ei i{position:relative;width:13px;height:22px;border-radius:999px;background:linear-gradient(180deg,#232652,#0B0C22);animation:m-blink 6s infinite;transition:height .3s}
+.m-ei i::after{content:"";position:absolute;left:2px;top:3px;width:5px;height:6px;border-radius:50%;background:#fff}
+@keyframes m-blink{0%,88%,94%,100%{transform:scaleY(1)}91%{transform:scaleY(.1)}}
+.m-listening .m-ei i{height:28px}
+.m-thinking .m-ei{transform:translate(5px,-8px) scale(.78)}
+.m-speaking .m-ei{animation:m-squint 2.6s ease-in-out infinite}
+@keyframes m-squint{0%,100%{transform:scaleY(1)}30%{transform:scaleY(.7)}36%{transform:scaleY(1)}70%{transform:scaleY(.78)}76%{transform:scaleY(1)}}
+.m-mouth{position:absolute;left:50%;top:50%;margin:16px 0 0 -13px;width:26px;height:5px;border-radius:999px;background:#0B0C22;opacity:0;transition:opacity .3s}
+.m-speaking .m-mouth{opacity:1;animation:m-mouth .7s ease-in-out infinite}
+@keyframes m-mouth{0%,100%{height:5px}20%{height:15px}40%{height:7px}60%{height:17px}80%{height:9px}}
+
+/* ============ 2. ENXAME ============ */
+.s-glow{position:absolute;left:50%;top:50%;width:150px;height:150px;margin:-75px;border-radius:50%;background:radial-gradient(circle,rgba(127,227,245,.28),transparent 66%);transition:opacity .8s}
+.s-speaking .s-glow{opacity:.25}
+.s-persp{position:absolute;inset:0;perspective:560px}
+.s-tilt{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.3,0,.2,1)}
+.s-spin{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.s-p{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transition:transform 1.1s cubic-bezier(.25,.8,.25,1)}
+.s-p b{position:absolute;display:block;border-radius:50%;--amp:3px;animation:s-bob 3.2s ease-in-out infinite;animation-delay:var(--bd)}
+@keyframes s-bob{0%,100%{transform:translateY(calc(var(--amp)*-1))}50%{transform:translateY(var(--amp))}}
+@keyframes s-rotY{to{transform:rotateY(360deg)}}
+@keyframes s-rotZ{to{transform:rotateZ(360deg)}}
+.s-idle .s-spin{animation:s-rotY 20s linear infinite}
+.s-listening .s-spin{animation:s-rotZ 30s linear infinite}
+.s-thinking .s-tilt{transform:rotateX(64deg)}
+.s-thinking .s-spin{animation:s-rotZ 5s linear infinite}
+.s-speaking .s-p b{--amp:var(--ampS);animation-duration:.9s}
+
+/* ============ 3. TERMINAL ============ */
+.t-mon{position:absolute;left:50%;top:50%;width:212px;height:190px;margin:-100px 0 0 -106px;border-radius:20px;background:#1a1c26;padding:10px;box-sizing:border-box;box-shadow:0 12px 30px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.07)}
+.t-stand{position:absolute;left:50%;top:50%;margin:88px 0 0 -34px;width:68px;height:14px;background:#161823;border-radius:0 0 8px 8px}
+.t-base{position:absolute;left:50%;top:50%;margin:100px 0 0 -52px;width:104px;height:7px;background:#1a1c26;border-radius:6px}
+.t-screen{position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#0c2a1a 0%,#04120a 75%);box-shadow:inset 0 0 30px rgba(0,0,0,.85);animation:t-flick 4s steps(1) infinite}
+@keyframes t-flick{0%,100%{opacity:1}30%{opacity:.96}31%{opacity:1}72%{opacity:.94}73%{opacity:1}}
+.t-svg{position:absolute;left:12px;top:14px;width:168px;height:auto;filter:drop-shadow(0 0 3px rgba(80,255,150,.8))}
+.t-svg rect{fill:#6BFFA8}
+.tg{display:none}
+.t-idle .tg-idle,.t-listening .tg-listening,.t-thinking .tg-thinking,.t-speaking .tg-speaking{display:block}
+.tg-idle .t-eye{transform-box:fill-box;transform-origin:center;animation:t-blinkpx 5s steps(1) infinite}
+@keyframes t-blinkpx{0%,92%{transform:scaleY(1)}94%,98%{transform:scaleY(.2)}100%{transform:scaleY(1)}}
+.t-ant{animation:t-ant 1s steps(1) infinite}
+@keyframes t-ant{0%{opacity:1}50%{opacity:.25}}
+.t-look{animation:t-look 3s steps(1) infinite}
+@keyframes t-look{0%{transform:translate(0,0)}30%{transform:translate(20px,-10px)}66%{transform:translate(-20px,-10px)}}
+.t-dot{animation:t-dot 1.2s steps(1) infinite}
+.t-dot:nth-of-type(2){animation-delay:.3s}
+.t-dot:nth-of-type(3){animation-delay:.6s}
+@keyframes t-dot{0%{opacity:.15}25%{opacity:1}75%{opacity:.15}}
+.t-bar{transform-box:fill-box;transform-origin:center;animation:t-bar .66s steps(1) infinite;animation-delay:calc(var(--k)*-.11s)}
+@keyframes t-bar{0%{transform:scaleY(.25)}17%{transform:scaleY(.7)}34%{transform:scaleY(.4)}51%{transform:scaleY(1)}68%{transform:scaleY(.55)}85%{transform:scaleY(.3)}}
+.t-line{position:absolute;left:14px;bottom:11px;display:flex;align-items:center;gap:6px;font:500 13px 'JetBrains Mono',ui-monospace,monospace;color:#6BFFA8;text-shadow:0 0 6px rgba(80,255,150,.7);white-space:nowrap}
+.t-txt{display:inline-block;overflow:hidden;width:calc(var(--n)*1ch)}
+.t-idle .t-txt{--n:6;animation:t-type1 .7s steps(6) 1 backwards}
+.t-listening .t-txt{--n:8;animation:t-type2 .8s steps(8) 1 backwards}
+.t-thinking .t-txt{--n:9;animation:t-type3 .9s steps(9) 1 backwards}
+.t-speaking .t-txt{--n:11;animation:t-type4 1s steps(11) 1 backwards}
+@keyframes t-type1{from{width:0}}
+@keyframes t-type2{from{width:0}}
+@keyframes t-type3{from{width:0}}
+@keyframes t-type4{from{width:0}}
+.t-cur{width:8px;height:14px;background:#6BFFA8;box-shadow:0 0 6px #6BFFA8;animation:t-blink 1s steps(1) infinite}
+@keyframes t-blink{0%{opacity:1}50%{opacity:0}}
+.t-scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 2px,transparent 2px 4px);pointer-events:none}
+.t-band{position:absolute;left:0;right:0;top:-50px;height:50px;background:linear-gradient(180deg,transparent,rgba(110,255,170,.1),transparent);animation:t-sweep 4.5s linear infinite;pointer-events:none}
+@keyframes t-sweep{to{transform:translateY(240px)}}
+.t-glare{position:absolute;inset:0;background:radial-gradient(ellipse at 28% 12%,rgba(255,255,255,.12),transparent 45%);pointer-events:none}
+.t-led{position:absolute;right:20px;bottom:3px;width:5px;height:5px;border-radius:50%;background:#35ff8a;box-shadow:0 0 6px #35ff8a}
+.t-thinking .t-led{animation:t-blink .4s steps(1) infinite}
+
+/* ============ 4. IRIS ============ */
+.i-ring{position:absolute;left:50%;top:50%;border-radius:50%}
+.i-ring--1{width:226px;height:226px;margin:-113px 0 0 -113px;background:repeating-conic-gradient(rgba(255,181,100,.9) 0 .9deg,transparent .9deg 5deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));opacity:.55;animation:c-spin 50s linear infinite}
+.i-ring--2{width:208px;height:208px;margin:-104px 0 0 -104px;border:1px dashed rgba(255,181,100,.35);animation:c-spin 36s linear infinite reverse}
+.i-listening .i-ring--1{opacity:1;animation-duration:12s}
+.i-thinking .i-ring--1{animation-duration:7s;animation-direction:reverse}
+.i-in span{position:absolute;left:50%;top:50%;width:196px;height:196px;margin:-98px 0 0 -98px;border-radius:50%;border:1.5px solid rgba(255,181,100,.75);opacity:0}
+.i-listening .i-in span{animation:i-in 2s ease-in infinite}
+.i-listening .i-in span:nth-child(2){animation-delay:.66s}
+.i-listening .i-in span:nth-child(3){animation-delay:1.32s}
+@keyframes i-in{0%{transform:scale(1.2);opacity:0}30%{opacity:.7}100%{transform:scale(1.02);opacity:0}}
+.i-house{position:absolute;left:50%;top:50%;width:196px;height:196px;margin:-98px 0 0 -98px;border-radius:50%;background:radial-gradient(circle at 34% 26%,#4d5468,#1b1e2a 55%,#080a10);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 18px 36px rgba(0,0,0,.6),0 0 46px rgba(255,150,60,.14)}
+.i-well{position:absolute;inset:14px;border-radius:50%;background:#02040a;overflow:hidden;box-shadow:inset 0 0 18px #000}
+.i-iw{position:absolute;inset:0;transition:transform .25s ease-out}
+.i-iris{position:absolute;left:50%;top:50%;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;overflow:hidden;background:radial-gradient(circle,#ffd27a 0%,#ff9d2e 26%,#d9561a 52%,#7a1f08 80%,#2a0a02 100%);box-shadow:inset 0 0 0 3px rgba(25,6,0,.7),inset 0 0 16px 6px rgba(0,0,0,.55)}
+.i-fibers{position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(rgba(255,235,170,.28) 0 1.1deg,transparent 1.1deg 4.6deg);-webkit-mask:radial-gradient(circle,transparent 20%,#000 36%);mask:radial-gradient(circle,transparent 20%,#000 36%);animation:c-spin 90s linear infinite}
+.i-pupil{position:absolute;left:50%;top:50%;width:var(--p);height:var(--p);margin-left:calc(var(--p)*-.5);margin-top:calc(var(--p)*-.5);border-radius:50%;background:#030203;box-shadow:0 0 8px 3px rgba(0,0,0,.7);transition:--p .6s ease,transform .25s ease-out}
+.i-idle .i-pupil{animation:i-p-idle 5s ease-in-out infinite}
+.i-listening .i-pupil{--p:68px}
+.i-thinking .i-pupil{animation:i-p-think 1.3s ease-in-out infinite}
+.i-speaking .i-pupil{animation:i-p-speak .9s ease-in-out infinite}
+@keyframes i-p-idle{0%,100%{--p:44px}50%{--p:50px}}
+@keyframes i-p-think{0%,100%{--p:26px}50%{--p:32px}}
+@keyframes i-p-speak{0%,100%{--p:38px}18%{--p:58px}36%{--p:42px}55%{--p:62px}74%{--p:40px}88%{--p:54px}}
+.i-rip span{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;border:1.5px solid rgba(255,230,170,.85);opacity:0}
+.i-speaking .i-rip span{animation:i-rip 1.2s ease-out infinite}
+.i-speaking .i-rip span:nth-child(2){animation-delay:.4s}
+.i-speaking .i-rip span:nth-child(3){animation-delay:.8s}
+@keyframes i-rip{0%{transform:scale(.8);opacity:.9}100%{transform:scale(3.4);opacity:0}}
+.i-laser{position:absolute;left:0;right:0;top:6%;height:2px;background:linear-gradient(90deg,transparent,#8FF5FF 50%,transparent);box-shadow:0 0 10px 1px #8FF5FF;opacity:0}
+.i-thinking .i-laser{opacity:1;animation:i-laser 1.5s ease-in-out infinite alternate}
+@keyframes i-laser{from{top:6%}to{top:94%}}
+.i-shutter{position:absolute;inset:0;border-radius:50%;--r:80px;transition:--r .5s ease;background:repeating-conic-gradient(from 22.5deg,#2e3342 0deg 42deg,#0a0c12 42deg 45deg);clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,calc(50% + var(--r)*.9239) calc(50% + var(--r)*.3827),calc(50% + var(--r)*.3827) calc(50% + var(--r)*.9239),calc(50% - var(--r)*.3827) calc(50% + var(--r)*.9239),calc(50% - var(--r)*.9239) calc(50% + var(--r)*.3827),calc(50% - var(--r)*.9239) calc(50% - var(--r)*.3827),calc(50% - var(--r)*.3827) calc(50% - var(--r)*.9239),calc(50% + var(--r)*.3827) calc(50% - var(--r)*.9239),calc(50% + var(--r)*.9239) calc(50% - var(--r)*.3827),calc(50% + var(--r)*.9239) calc(50% + var(--r)*.3827))}
+.i-idle .i-shutter{animation:i-sh-idle 6s ease-in-out infinite}
+.i-listening .i-shutter{--r:96px}
+.i-thinking .i-shutter{animation:i-sh-think 1.4s ease-in-out infinite}
+.i-speaking .i-shutter{animation:i-sh-speak .9s ease-in-out infinite}
+@keyframes i-sh-idle{0%,100%{--r:80px}45%{--r:74px}86%{--r:80px}89%{--r:2px}92%{--r:80px}}
+@keyframes i-sh-think{0%,100%{--r:58px}50%{--r:48px}}
+@keyframes i-sh-speak{0%,100%{--r:76px}18%{--r:90px}36%{--r:80px}55%{--r:92px}74%{--r:78px}88%{--r:88px}}
+.i-cornea{position:absolute;inset:0;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 30% 22%,rgba(255,255,255,.55) 0%,rgba(255,255,255,.1) 16%,transparent 34%),radial-gradient(circle at 50% 50%,transparent 62%,rgba(120,180,255,.16) 100%)}
+.i-glint{position:absolute;left:60%;top:62%;width:18px;height:9px;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(1px);transition:transform .25s ease-out}
+
+/* ============ 5. ESPIRITO ============ */
+.g-shadow{position:absolute;left:50%;bottom:20px;width:96px;height:14px;margin-left:-48px;border-radius:50%;background:radial-gradient(ellipse,rgba(190,170,255,.4),transparent 70%);filter:blur(3px);animation:g-sh 3.6s ease-in-out infinite}
+@keyframes g-sh{0%,100%{transform:scaleX(1);opacity:.8}50%{transform:scaleX(.8);opacity:.5}}
+.g-float,.g-trail{position:absolute;left:50%;top:50%;margin:-84px 0 0 -65px;width:130px;height:160px;animation:g-bob 3.6s ease-in-out infinite}
+.g-trail{opacity:.22;filter:blur(2px)}
+.g-stage .g-trail--1{animation-delay:.14s}
+.g-stage .g-trail--2{animation-delay:.28s;opacity:.1}
+.g-svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 14px rgba(190,170,255,.45))}
+@keyframes g-bob{0%,100%{transform:translateY(0) rotate(-2.5deg)}50%{transform:translateY(-10px) rotate(2.5deg)}}
+@keyframes g-hop{0%,100%{transform:translateY(0) scale(1.05,.94)}50%{transform:translateY(-14px) scale(.96,1.05)}}
+@keyframes g-sway{0%,100%{transform:translateY(-3px) rotate(-5deg)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes g-tilt{0%,100%{transform:translateY(-4px) rotate(9deg)}50%{transform:translateY(-8px) rotate(11deg)}}
+.g-speaking .g-float,.g-speaking .g-trail{animation:g-hop .55s ease-in-out infinite}
+.g-thinking .g-float,.g-thinking .g-trail{animation:g-sway 4.5s ease-in-out infinite}
+.g-listening .g-float,.g-listening .g-trail{animation:g-tilt 3s ease-in-out infinite}
+.g-speaking .g-shadow{animation-duration:.55s}
+.g-arm{position:absolute;top:92px;width:16px;height:30px;border-radius:999px;background:linear-gradient(#fff,#d6ceff);transform-origin:50% 12%;transition:transform .45s cubic-bezier(.3,1.5,.5,1)}
+.g-arm--l{left:-3px;transform:rotate(12deg)}
+.g-arm--r{right:-3px;transform:rotate(-12deg)}
+.g-listening .g-arm--l{transform:rotate(40deg)}
+.g-listening .g-arm--r{transform:rotate(-40deg)}
+.g-thinking .g-arm--r{transform:rotate(115deg)}
+.g-speaking .g-arm--l{animation:g-flapl .5s ease-in-out infinite alternate}
+.g-speaking .g-arm--r{animation:g-flapr .5s ease-in-out infinite alternate;animation-delay:.12s}
+@keyframes g-flapl{from{transform:rotate(10deg)}to{transform:rotate(52deg)}}
+@keyframes g-flapr{from{transform:rotate(-10deg)}to{transform:rotate(-52deg)}}
+.g-eyes{position:absolute;left:0;right:0;top:64px;display:flex;justify-content:center;transition:transform .25s ease-out}
+.g-ei{display:flex;gap:30px;transition:transform .4s ease}
+.g-ei i{position:relative;width:15px;height:24px;border-radius:999px;background:linear-gradient(#2b1d52,#150d2e);animation:g-blink 5.5s infinite;transition:height .3s,width .3s}
+.g-ei i::after{content:"";position:absolute;left:3px;top:3px;width:6px;height:7px;border-radius:50%;background:#fff}
+.g-ei i::before{content:"";position:absolute;right:3px;bottom:4px;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.6)}
+@keyframes g-blink{0%,90%,96%,100%{transform:scaleY(1)}93%{transform:scaleY(.1)}}
+.g-listening .g-ei i{height:30px;width:18px}
+.g-thinking .g-ei{transform:translate(5px,-6px)}
+.g-thinking .g-ei i{height:19px}
+.g-blush{position:absolute;top:98px;width:20px;height:11px;border-radius:50%;background:rgba(255,120,160,.55);filter:blur(2px);transition:opacity .3s}
+.g-blush--l{left:18px}.g-blush--r{right:18px}
+.g-listening .g-blush{background:rgba(255,120,160,.8)}
+.g-mouth{position:absolute;left:50%;top:100px;translate:-50% 0;width:16px;height:9px;border:2.5px solid #150d2e;border-top:0;border-radius:0 0 999px 999px;box-sizing:content-box;transition:width .3s,height .3s,border-radius .3s}
+.g-mouth::after{content:"";position:absolute;left:3px;right:3px;bottom:0;height:5px;border-radius:999px 999px 0 0;background:#ff7fa5;opacity:0}
+.g-listening .g-mouth{width:9px;height:9px;border:2.5px solid #150d2e;border-radius:50%}
+.g-thinking .g-mouth{width:12px;height:0;border:0;border-bottom:2.5px solid #150d2e;border-radius:0;animation:g-hmm 2.4s ease-in-out infinite}
+@keyframes g-hmm{0%,100%{rotate:-6deg}50%{rotate:6deg}}
+.g-speaking .g-mouth{width:16px;height:12px;border:0;background:#150d2e;border-radius:35% 35% 999px 999px;animation:g-mouth .7s ease-in-out infinite}
+.g-speaking .g-mouth::after{opacity:1}
+@keyframes g-mouth{0%,100%{scale:1 .45}25%{scale:1.1 1}50%{scale:.85 .6}75%{scale:1.05 .95}}
+.g-sp{position:absolute;width:10px;height:10px;background:#fff;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:g-tw 2.4s ease-in-out infinite}
+@keyframes g-tw{0%,100%{opacity:.2;transform:scale(.5)}50%{opacity:1;transform:scale(1)}}
+.g-think{position:absolute;right:20px;top:22px;opacity:0;transition:opacity .3s}
+.g-thinking .g-think{opacity:1}
+.g-bub{position:relative;width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;gap:5px}
+.g-bub i{width:6px;height:6px;border-radius:50%;background:#2b1d52;animation:g-dot 1.2s ease-in-out infinite}
+.g-bub i:nth-child(2){animation-delay:.2s}
+.g-bub i:nth-child(3){animation-delay:.4s}
+@keyframes g-dot{0%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-3px);opacity:1}}
+.g-tail1{position:absolute;left:-6px;bottom:-10px;width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.9)}
+.g-tail2{position:absolute;left:-14px;bottom:-20px;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.8)}
+.g-sound{position:absolute;right:16px;top:70px;opacity:0}
+.g-listening .g-sound{opacity:1}
+.g-sound span{position:absolute;border:2px solid rgba(207,198,255,.85);border-left:0;border-radius:0 30px 30px 0;opacity:0}
+.g-sound span:nth-child(1){left:0;top:0;width:10px;height:22px}
+.g-sound span:nth-child(2){left:10px;top:-8px;width:14px;height:38px}
+.g-listening .g-sound span{animation:g-snd 1.4s ease-out infinite}
+.g-listening .g-sound span:nth-child(2){animation-delay:.25s}
+@keyframes g-snd{0%{opacity:0;transform:translateX(-6px)}40%{opacity:1}100%{opacity:0;transform:translateX(6px)}}
+
+
+
+/* ============ BASE DO COMPONENTE ============ */
+.av-box{position:relative}
+.av-scaler{position:absolute;left:0;top:0;width:270px;height:270px;transform-origin:0 0}
+.av-wrap{position:relative;width:270px;height:270px}
+.av-stage{position:relative;width:270px;height:270px;border-radius:34px;overflow:hidden;background:radial-gradient(circle at 50% 38%,#181b2e 0%,#0a0b12 72%);box-shadow:0 0 0 1px rgba(255,255,255,.07),0 20px 50px rgba(0,0,0,.35)}
+.av-poke{animation:av-poke .75s cubic-bezier(.3,1.5,.5,1)}
+.av-wake{animation:av-wake .9s ease-out}
+@keyframes av-poke{0%{scale:1}25%{scale:1.07 .94;rotate:-2deg}55%{scale:.97 1.04;rotate:2deg}100%{scale:1;rotate:0deg}}
+@keyframes av-wake{0%{scale:.96}35%{scale:1.05 1.07}100%{scale:1}}
+@keyframes av-shake{0%{translate:-2px 1px}50%{translate:2px -1px}100%{translate:-1px 2px}}
+.av-fx{position:absolute;left:0;top:0;width:270px;height:270px;pointer-events:none;border-radius:34px;overflow:hidden}
+.av-vig{position:absolute;inset:0;opacity:0;box-shadow:inset 0 0 46px 6px rgba(255,80,70,.55);border-radius:34px}
+.av-s-error .av-vig{animation:av-vig 1.1s ease-in-out infinite}
+@keyframes av-vig{0%,100%{opacity:.25}50%{opacity:.75}}
+.av-zzz{position:absolute;right:30px;top:34px;opacity:0}
+.av-zzz span{position:absolute;left:0;top:0;font:600 18px 'Space Grotesk',sans-serif;color:#cfd3ff;opacity:0}
+.av-s-sleeping .av-zzz{opacity:1}
+.av-s-sleeping .av-zzz span{animation:av-z 3.6s ease-in-out infinite}
+.av-zzz span:nth-child(2){animation-delay:1.2s;font-size:14px}
+.av-zzz span:nth-child(3){animation-delay:2.4s;font-size:11px}
+@keyframes av-z{0%{transform:translate(0,14px) scale(.7);opacity:0}25%{opacity:.9}100%{transform:translate(14px,-30px) scale(1.15);opacity:0}}
+.av-bang{position:absolute;right:26px;top:26px;width:30px;height:30px;border-radius:50%;background:#FF5B4F;color:#fff;font:700 18px/30px 'Space Grotesk',sans-serif;text-align:center;opacity:0;transform:scale(.4)}
+.av-s-error .av-bang{animation:av-bang 1s ease-in-out infinite}
+@keyframes av-bang{0%{opacity:0;transform:scale(.4)}18%{opacity:1;transform:scale(1.15)}30%,70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
+.av-k-terminal .av-zzz,.av-k-terminal .av-bang{display:none}
+
+/* ============ NOVOS ESTADOS: dormindo e erro ============ */
+/* 1. Mercurio */
+.m-sleeping .m-wrap{filter:brightness(.5) saturate(.55)}
+.m-sleeping .m-core{transform:scale(.78) translateY(10px);animation:m-wob 12s ease-in-out infinite}
+.m-sleeping .m-o{animation-duration:calc(var(--t)*3.5)}
+.m-sleeping .m-drop{animation:m-in-sl calc(var(--t)*.7) ease-in-out infinite alternate}
+@keyframes m-in-sl{from{transform:translateX(calc(var(--r1)*.5))}to{transform:translateX(calc(var(--r2)*.46))}}
+.m-sleeping .m-spec{transform:translate(0,12px) rotate(-28deg) scale(.7);opacity:.5}
+.m-sleeping .m-eyes{margin-top:-14px;transition:transform .25s ease-out,margin-top .6s ease}
+.m-sleeping .m-ei i{height:3px;width:16px;margin-top:10px;animation:none}
+.m-sleeping .m-ei i::after{display:none}
+.m-sleeping .m-mouth{opacity:1;width:10px;height:10px;margin:22px 0 0 -5px;border-radius:50%;animation:m-snore 4s ease-in-out infinite}
+@keyframes m-snore{0%,100%{scale:.7}50%{scale:1.1}}
+.m-error .m-tint{filter:hue-rotate(135deg) saturate(1.7);animation:m-tint 7s ease-in-out infinite alternate}
+.m-error .m-core{animation:m-wob 1.2s ease-in-out infinite,av-shake .12s steps(2) infinite}
+.m-error .m-o{animation-duration:calc(var(--t)*.3)}
+.m-error .m-drop{animation:m-hop .32s ease-in-out infinite;animation-delay:var(--dl)}
+.m-error .m-ei i{height:11px;width:17px;animation:none}
+.m-error .m-ei i:first-child{rotate:-16deg}
+.m-error .m-ei i:last-child{rotate:16deg}
+.m-error .m-ei i::after{left:3px;top:2px;width:4px;height:4px}
+.m-error .m-mouth{opacity:1;width:24px;height:4px;animation:m-shiver .18s steps(2) infinite}
+@keyframes m-shiver{0%{translate:0 0;rotate:-4deg}100%{translate:0 2px;rotate:4deg}}
+.m-error .m-shadow{background:radial-gradient(ellipse,rgba(255,90,80,.5),transparent 70%)}
+/* 2. Enxame */
+.s-sleeping .s-glow{opacity:.35}
+.s-sleeping .s-spin{animation:s-rotY 70s linear infinite}
+.s-sleeping .s-tilt{animation:s-breathe 5s ease-in-out infinite}
+@keyframes s-breathe{0%,100%{scale:1}50%{scale:1.08}}
+.s-sleeping .s-p b{--amp:1.5px;animation-duration:6s;opacity:.6}
+.s-error .s-glow{background:radial-gradient(circle,rgba(255,91,79,.3),transparent 66%)}
+.s-error .s-spin{animation:av-shake .1s steps(2) infinite}
+.s-error .s-p b{background:#FF6B5E!important;box-shadow:0 0 7px #FF6B5E!important;--amp:6px;animation-duration:.25s}
+/* 3. Terminal */
+.t-sleeping .tg-sleeping,.t-error .tg-error{display:block}
+.t-sleeping .t-screen{filter:brightness(.55)}
+.t-sleeping .t-txt{--n:4;animation:t-type5 .5s steps(4) 1 backwards}
+@keyframes t-type5{from{width:0}}
+.t-error .t-txt{--n:9;animation:t-type6 .8s steps(9) 1 backwards}
+@keyframes t-type6{from{width:0}}
+.t-sleeping .t-cur{animation-duration:2.4s}
+.t-sleeping .t-led{background:#ffb347;box-shadow:0 0 6px #ffb347;animation:t-breathe 3s ease-in-out infinite}
+@keyframes t-breathe{0%,100%{opacity:.9}50%{opacity:.25}}
+.t-error .t-screen{background:radial-gradient(ellipse at 50% 45%,#3a0d0d 0%,#140404 75%)}
+.t-error .t-svg{filter:drop-shadow(0 0 3px rgba(255,90,80,.85));animation:t-glitch .35s steps(1) infinite}
+.t-error .t-svg rect{fill:#FF6B5E}
+.t-error .t-line{color:#FF7B72;text-shadow:0 0 6px rgba(255,90,80,.7)}
+.t-error .t-cur{background:#FF7B72;box-shadow:0 0 6px #FF7B72}
+.t-error .t-led{background:#ff4b4b;box-shadow:0 0 6px #ff4b4b;animation:t-blink .25s steps(1) infinite}
+.t-error .t-mon{animation:av-shake .18s steps(2) infinite}
+@keyframes t-glitch{0%{transform:translate(0,0)}20%{transform:translate(-4px,0)}22%{transform:translate(3px,2px)}60%{transform:translate(0,0)}64%{transform:translate(5px,-1px)}66%{transform:translate(0,0)}}
+/* 4. Iris */
+.i-sleeping .i-ring--1{opacity:.22;animation-duration:140s}
+.i-sleeping .i-ring--2{opacity:.4}
+.i-sleeping .i-house{filter:brightness(.62) saturate(.8)}
+.i-sleeping .i-shutter{animation:i-sh-sleep 5s ease-in-out infinite}
+@keyframes i-sh-sleep{0%,100%{--r:2px}50%{--r:7px}}
+.i-sleeping .i-pupil{--p:34px}
+.i-error .i-ring--1{background:repeating-conic-gradient(rgba(255,91,79,.95) 0 .9deg,transparent .9deg 5deg);opacity:1;animation-duration:5s}
+.i-error .i-ring--2{border-color:rgba(255,91,79,.55)}
+.i-error .i-house{box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),0 18px 36px rgba(0,0,0,.6),0 0 46px rgba(255,70,60,.38)}
+.i-error .i-iris{background:radial-gradient(circle,#ffa08f 0%,#ff4338 26%,#a3120c 52%,#4d0603 80%,#1b0201 100%);animation:av-shake .16s steps(2) infinite}
+.i-error .i-fibers{animation-duration:12s}
+.i-error .i-pupil{animation:i-p-err .5s steps(1) infinite}
+@keyframes i-p-err{0%{--p:18px}33%{--p:30px}66%{--p:22px}}
+.i-error .i-shutter{animation:i-sh-err .45s steps(1) infinite}
+@keyframes i-sh-err{0%{--r:84px}30%{--r:60px}55%{--r:90px}80%{--r:66px}}
+.i-error .i-laser{opacity:1;background:linear-gradient(90deg,transparent,#FF8A80 50%,transparent);box-shadow:0 0 10px 1px #FF5B4F;animation:i-laser .6s linear infinite alternate}
+/* 5. Espirito */
+.g-sleeping .g-float,.g-sleeping .g-trail{animation:g-snooze 5s ease-in-out infinite}
+@keyframes g-snooze{0%,100%{transform:translateY(8px) rotate(7deg) scale(1,1)}50%{transform:translateY(4px) rotate(7deg) scale(1.02,1.03)}}
+.g-sleeping .g-trail{opacity:.12}
+.g-sleeping .g-svg{filter:drop-shadow(0 0 10px rgba(190,170,255,.22)) brightness(.78)}
+.g-sleeping .g-ei i{height:3px;width:17px;animation:none;margin-top:12px}
+.g-sleeping .g-ei i::after,.g-sleeping .g-ei i::before{display:none}
+.g-sleeping .g-mouth{width:8px;height:8px;border:2.5px solid #150d2e;border-radius:50%;animation:g-snore 4s ease-in-out infinite}
+@keyframes g-snore{0%,100%{scale:.75}50%{scale:1.15}}
+.g-sleeping .g-sp{opacity:.1;animation:none}
+.g-sleeping .g-arm--l{transform:rotate(4deg)}
+.g-sleeping .g-arm--r{transform:rotate(-4deg)}
+.g-sleeping .g-shadow{animation-duration:5s}
+.g-error .g-float,.g-error .g-trail{animation:g-panic .16s steps(2) infinite}
+@keyframes g-panic{0%{transform:translate(-3px,0) rotate(-3deg)}100%{transform:translate(3px,-2px) rotate(3deg)}}
+.g-error .g-svg{filter:drop-shadow(0 0 14px rgba(255,100,90,.55)) hue-rotate(105deg) saturate(1.4)}
+.g-error .g-ei{gap:26px}
+.g-error .g-ei i{height:30px;width:20px}
+.g-error .g-blush{background:rgba(255,90,90,.85)}
+.g-error .g-mouth{width:14px;height:10px;border:2.5px solid #150d2e;border-radius:50%;animation:g-tremble .14s steps(2) infinite}
+@keyframes g-tremble{0%{translate:-50% 0;scale:1 1}100%{translate:-50% 1px;scale:1.1 .85}}
+.g-error .g-arm--l{animation:g-panl .18s ease-in-out infinite alternate}
+.g-error .g-arm--r{animation:g-panr .18s ease-in-out infinite alternate}
+@keyframes g-panl{from{transform:rotate(55deg)}to{transform:rotate(85deg)}}
+@keyframes g-panr{from{transform:rotate(-55deg)}to{transform:rotate(-85deg)}}
+.g-sweat{position:absolute;right:16px;top:44px;width:9px;height:13px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#9fd8ff;opacity:0}
+.g-error .g-sweat{animation:g-sweat 1s ease-in infinite}
+@keyframes g-sweat{0%{opacity:0;translate:0 0}20%{opacity:1}100%{opacity:0;translate:2px 34px}}
+@media (prefers-reduced-motion: reduce){.av-box *{animation:none!important}}
+
+
+
+.es-card{display:flex;flex-direction:column;gap:18px;padding:20px;border-radius:18px;background:#10121A;border:1px solid rgba(255,255,255,.08);min-width:0}
+.es-stage{height:200px;display:flex;align-items:center;justify-content:center}
+.es-box{position:relative;width:184px;height:184px}
+.es-scale{position:absolute;left:0;top:0;width:270px;height:270px;transform:scale(.68);transform-origin:0 0}
+
+</style>
+</helmet>
+<div style="width: 1600px; height: 720px; box-sizing: border-box; padding: 48px 56px; background: #0B0C12; color: #ECEDF5; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 32px; font-weight: 600; letter-spacing: -0.02em">Estados do avatar Íris</h1>
+<p style="margin: 0; font-size: 15px; color: #9A9EB4; max-width: 760px; line-height: 1.5">Um olho mecânico com diafragma de oito lâminas. Na janela ele segue o mouse; em cada estado dilata a pupila, fecha o diafragma ou dispara um laser pela íris. Em Compose é Canvas com clipPath de um octógono animado.</p>
+</div>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #C9BFFF; background: #181B27; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 10px 14px">NoxAvatar.Iris · NoxMood { Idle, Sleeping, Listening, Thinking, Speaking, Error }</code>
+</div>
+<div style="flex: 1; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px">
+<div class="es-card">
+<div class="es-stage"><div class="es-box"><div class="es-scale"><div class="av-wrap">
+<div class="av-stage i-stage i-idle" role="img" aria-label="Iris, pronto">
+<div class="i-ring i-ring--1" aria-hidden="true"></div>
+<div class="i-ring i-ring--2" aria-hidden="true"></div>
+<div class="i-in" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="i-house" aria-hidden="true">
+<div class="i-well">
+<div class="i-iw" style="transform: translate(0px, 0px)">
+<div class="i-iris">
+<div class="i-fibers"></div>
+<div class="i-rip"><span></span><span></span><span></span></div>
+<div class="i-pupil" style="transform: translate(0px, 0px)"></div>
+<div class="i-laser"></div>
+</div>
+</div>
+<div class="i-shutter"></div>
+<div class="i-cornea"></div>
+<div class="i-glint" style="transform: translate(0px, 0px) rotate(-30deg)"></div>
+</div>
+</div>
+</div>
+<div class="av-fx av-s-idle av-k-iris" aria-hidden="true"><div class="av-vig"></div><div class="av-zzz"><span>z</span><span>z</span><span>Z</span></div><div class="av-bang">!</div></div>
+</div></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Pronto</h2>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9EB4">Idle</code>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #C4C7D6">Sem atividade, campo vazio.</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9A9EB4">Pupila respira em 5s · diafragma pisca a cada 6s · fibras giram devagar · anéis girando em sentidos opostos · segue o mouse</p>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap"><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FFB56A"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FFB56A</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #D9561A"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#D9561A</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #2A0A02"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#2A0A02</code></div></div>
+</div>
+<div class="es-card">
+<div class="es-stage"><div class="es-box"><div class="es-scale"><div class="av-wrap">
+<div class="av-stage i-stage i-sleeping" role="img" aria-label="Iris, dormindo">
+<div class="i-ring i-ring--1" aria-hidden="true"></div>
+<div class="i-ring i-ring--2" aria-hidden="true"></div>
+<div class="i-in" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="i-house" aria-hidden="true">
+<div class="i-well">
+<div class="i-iw" style="transform: translate(0px, 0px)">
+<div class="i-iris">
+<div class="i-fibers"></div>
+<div class="i-rip"><span></span><span></span><span></span></div>
+<div class="i-pupil" style="transform: translate(0px, 0px)"></div>
+<div class="i-laser"></div>
+</div>
+</div>
+<div class="i-shutter"></div>
+<div class="i-cornea"></div>
+<div class="i-glint" style="transform: translate(0px, 0px) rotate(-30deg)"></div>
+</div>
+</div>
+</div>
+<div class="av-fx av-s-sleeping av-k-iris" aria-hidden="true"><div class="av-vig"></div><div class="av-zzz"><span>z</span><span>z</span><span>Z</span></div><div class="av-bang">!</div></div>
+</div></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Dormindo</h2>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9EB4">Sleeping</code>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #C4C7D6">20s sem atividade.</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9A9EB4">Diafragma fechado com uma fresta que respira · carcaça a 62% · anéis quase parados · “zzz”</p>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap"><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #8A6A44"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#8A6A44</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #4D5468"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#4D5468</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #080A10"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#080A10</code></div></div>
+</div>
+<div class="es-card">
+<div class="es-stage"><div class="es-box"><div class="es-scale"><div class="av-wrap">
+<div class="av-stage i-stage i-listening" role="img" aria-label="Iris, ouvindo">
+<div class="i-ring i-ring--1" aria-hidden="true"></div>
+<div class="i-ring i-ring--2" aria-hidden="true"></div>
+<div class="i-in" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="i-house" aria-hidden="true">
+<div class="i-well">
+<div class="i-iw" style="transform: translate(0px, 0px)">
+<div class="i-iris">
+<div class="i-fibers"></div>
+<div class="i-rip"><span></span><span></span><span></span></div>
+<div class="i-pupil" style="transform: translate(0px, 0px)"></div>
+<div class="i-laser"></div>
+</div>
+</div>
+<div class="i-shutter"></div>
+<div class="i-cornea"></div>
+<div class="i-glint" style="transform: translate(0px, 0px) rotate(-30deg)"></div>
+</div>
+</div>
+</div>
+<div class="av-fx av-s-listening av-k-iris" aria-hidden="true"><div class="av-vig"></div><div class="av-zzz"><span>z</span><span>z</span><span>Z</span></div><div class="av-bang">!</div></div>
+</div></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Ouvindo</h2>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9EB4">Listening</code>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #C4C7D6">Campo com texto ou microfone ligado.</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9A9EB4">Pupila dilata ao máximo · diafragma aberto · 3 ondas convergem para dentro · anel externo mais rápido</p>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap"><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FFD27A"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FFD27A</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FF9D2E"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FF9D2E</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #7A1F08"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#7A1F08</code></div></div>
+</div>
+<div class="es-card">
+<div class="es-stage"><div class="es-box"><div class="es-scale"><div class="av-wrap">
+<div class="av-stage i-stage i-thinking" role="img" aria-label="Iris, pensando">
+<div class="i-ring i-ring--1" aria-hidden="true"></div>
+<div class="i-ring i-ring--2" aria-hidden="true"></div>
+<div class="i-in" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="i-house" aria-hidden="true">
+<div class="i-well">
+<div class="i-iw" style="transform: translate(0px, 0px)">
+<div class="i-iris">
+<div class="i-fibers"></div>
+<div class="i-rip"><span></span><span></span><span></span></div>
+<div class="i-pupil" style="transform: translate(0px, 0px)"></div>
+<div class="i-laser"></div>
+</div>
+</div>
+<div class="i-shutter"></div>
+<div class="i-cornea"></div>
+<div class="i-glint" style="transform: translate(0px, 0px) rotate(-30deg)"></div>
+</div>
+</div>
+</div>
+<div class="av-fx av-s-thinking av-k-iris" aria-hidden="true"><div class="av-vig"></div><div class="av-zzz"><span>z</span><span>z</span><span>Z</span></div><div class="av-bang">!</div></div>
+</div></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Pensando</h2>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9EB4">Thinking</code>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #C4C7D6">Requisição à API em andamento.</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9A9EB4">Diafragma fecha e pulsa · laser ciano varre a íris · pupila contraída · anel gira ao contrário</p>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap"><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #8FF5FF"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#8FF5FF</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FF9D2E"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FF9D2E</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #2A0A02"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#2A0A02</code></div></div>
+</div>
+<div class="es-card">
+<div class="es-stage"><div class="es-box"><div class="es-scale"><div class="av-wrap">
+<div class="av-stage i-stage i-speaking" role="img" aria-label="Iris, respondendo">
+<div class="i-ring i-ring--1" aria-hidden="true"></div>
+<div class="i-ring i-ring--2" aria-hidden="true"></div>
+<div class="i-in" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="i-house" aria-hidden="true">
+<div class="i-well">
+<div class="i-iw" style="transform: translate(0px, 0px)">
+<div class="i-iris">
+<div class="i-fibers"></div>
+<div class="i-rip"><span></span><span></span><span></span></div>
+<div class="i-pupil" style="transform: translate(0px, 0px)"></div>
+<div class="i-laser"></div>
+</div>
+</div>
+<div class="i-shutter"></div>
+<div class="i-cornea"></div>
+<div class="i-glint" style="transform: translate(0px, 0px) rotate(-30deg)"></div>
+</div>
+</div>
+</div>
+<div class="av-fx av-s-speaking av-k-iris" aria-hidden="true"><div class="av-vig"></div><div class="av-zzz"><span>z</span><span>z</span><span>Z</span></div><div class="av-bang">!</div></div>
+</div></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Respondendo</h2>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9EB4">Speaking</code>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #C4C7D6">Resposta recebida e sendo exibida.</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9A9EB4">Pupila e diafragma pulsam no ritmo da fala · 3 ondas claras saem da pupila</p>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap"><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FFD27A"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FFD27A</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FFE6AA"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FFE6AA</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #D9561A"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#D9561A</code></div></div>
+</div>
+<div class="es-card">
+<div class="es-stage"><div class="es-box"><div class="es-scale"><div class="av-wrap">
+<div class="av-stage i-stage i-error" role="img" aria-label="Iris, com erro">
+<div class="i-ring i-ring--1" aria-hidden="true"></div>
+<div class="i-ring i-ring--2" aria-hidden="true"></div>
+<div class="i-in" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="i-house" aria-hidden="true">
+<div class="i-well">
+<div class="i-iw" style="transform: translate(0px, 0px)">
+<div class="i-iris">
+<div class="i-fibers"></div>
+<div class="i-rip"><span></span><span></span><span></span></div>
+<div class="i-pupil" style="transform: translate(0px, 0px)"></div>
+<div class="i-laser"></div>
+</div>
+</div>
+<div class="i-shutter"></div>
+<div class="i-cornea"></div>
+<div class="i-glint" style="transform: translate(0px, 0px) rotate(-30deg)"></div>
+</div>
+</div>
+</div>
+<div class="av-fx av-s-error av-k-iris" aria-hidden="true"><div class="av-vig"></div><div class="av-zzz"><span>z</span><span>z</span><span>Z</span></div><div class="av-bang">!</div></div>
+</div></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 600">Erro</h2>
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9A9EB4">Error</code>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #C4C7D6">Sem rede, chave inválida ou outra falha.</p>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9A9EB4">Íris vermelha · pupila e diafragma saltam em passos · laser vermelho varrendo · tremor · glow vermelho</p>
+</div>
+<div style="display: flex; gap: 10px; margin-top: auto; flex-wrap: wrap"><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #FF4338"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#FF4338</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #A3120C"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#A3120C</code></div><div style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: #1B0201"></span><code style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #9A9EB4">#1B0201</code></div></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1600,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
