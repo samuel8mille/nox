@@ -299,12 +299,22 @@ private fun Composer(
                     .padding(vertical = 8.dp)
                     .focusRequester(focusRequester)
                     .onPreviewKeyEvent { event ->
-                        if (event.type == KeyEventType.KeyDown &&
-                            event.key == Key.Enter && !event.isShiftPressed
-                        ) {
-                            if (sendEnabled) onSend()
-                            true
-                        } else false
+                        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                        val singleLine = !draft.contains('\n')
+                        when {
+                            event.key == Key.Enter && !event.isShiftPressed -> {
+                                if (sendEnabled) onSend()
+                                true
+                            }
+                            // Setas navegam o histórico quando o texto é de uma linha.
+                            event.key == Key.DirectionUp && singleLine -> {
+                                onHistoryPrevious(); true
+                            }
+                            event.key == Key.DirectionDown && singleLine -> {
+                                onHistoryNext(); true
+                            }
+                            else -> false
+                        }
                     },
                 textStyle = TextStyle(color = colors.text, fontSize = 15.sp, lineHeight = 22.sp),
                 cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent),

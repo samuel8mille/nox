@@ -1,42 +1,27 @@
-Calculating task graph as configuration cache cannot be reused because file 'desktopApp/build.gradle.kts' has changed.
-
-> Configure project :shared
-w: [33m[1m⚠️ Native task 'iosSimulatorArm64Test' is disabled[0m[0m
-Task 'iosSimulatorArm64Test' for target 'ios_simulator_arm64' cannot run on the current host (macos-x86_64).
-Reason: architecture mismatch - target requires ARM64, current host is X64
-[32m[1mSolution:[0m[0m
-[32m[3mTo suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.[0m[0m
-
-w: [33m[1m⚠️ Deprecated Kotlin/Native Host[0m[0m
-The current host platform 'macos_x64' is deprecated and will be removed in a future Kotlin release. The Kotlin/Native compiler will no longer be distributed for this host.
-[32m[1mSolution:[0m[0m
-[32m[3mMigrate your build to a non-deprecated supported host platform for Kotlin/Native.[0m[0m
-[36mLearn more about Kotlin/Native target support and migration: [0m[34mhttps://kotl.in/native-targets-tiers[0m[36m[0m
-
-
-> Task :desktopApp:generateComposeResClass SKIPPED
+Reusing configuration cache.
 > Task :desktopApp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :desktopApp:generateComposeResClass SKIPPED
 > Task :shared:convertXmlValueResourcesForJvmMain NO-SOURCE
 > Task :desktopApp:convertXmlValueResourcesForMain NO-SOURCE
-> Task :shared:generateComposeResClass UP-TO-DATE
-> Task :shared:generateExpectResourceCollectorsForCommonMain UP-TO-DATE
 > Task :shared:convertXmlValueResourcesForCommonMain NO-SOURCE
-> Task :shared:kmpPartiallyResolvedDependenciesChecker
-> Task :desktopApp:copyNonXmlValueResourcesForMain NO-SOURCE
 > Task :shared:copyNonXmlValueResourcesForJvmMain NO-SOURCE
-> Task :desktopApp:prepareAppResources NO-SOURCE
+> Task :desktopApp:copyNonXmlValueResourcesForMain NO-SOURCE
+> Task :shared:generateComposeResClass UP-TO-DATE
+> Task :shared:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:generateExpectResourceCollectorsForCommonMain UP-TO-DATE
 > Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :shared:checkJvmMainComposeLibrariesCompatibility
-> Task :desktopApp:prepareComposeResourcesTaskForMain NO-SOURCE
-> Task :shared:copyNonXmlValueResourcesForCommonMain UP-TO-DATE
+> Task :desktopApp:prepareAppResources NO-SOURCE
 > Task :shared:prepareComposeResourcesTaskForJvmMain NO-SOURCE
+> Task :desktopApp:prepareComposeResourcesTaskForMain NO-SOURCE
+> Task :shared:checkJvmMainComposeLibrariesCompatibility
+> Task :shared:copyNonXmlValueResourcesForCommonMain UP-TO-DATE
 > Task :desktopApp:generateResourceAccessorsForMain SKIPPED
 > Task :desktopApp:generateActualResourceCollectorsForMain SKIPPED
 > Task :shared:generateResourceAccessorsForJvmMain NO-SOURCE
-> Task :shared:prepareComposeResourcesTaskForCommonMain UP-TO-DATE
 > Task :desktopApp:assembleMainResources UP-TO-DATE
-> Task :shared:generateResourceAccessorsForCommonMain UP-TO-DATE
+> Task :shared:prepareComposeResourcesTaskForCommonMain UP-TO-DATE
 > Task :desktopApp:processResources UP-TO-DATE
+> Task :shared:generateResourceAccessorsForCommonMain UP-TO-DATE
 > Task :shared:assembleJvmMainResources UP-TO-DATE
 > Task :shared:generateActualResourceCollectorsForJvmMain UP-TO-DATE
 > Task :shared:jvmProcessResources UP-TO-DATE
