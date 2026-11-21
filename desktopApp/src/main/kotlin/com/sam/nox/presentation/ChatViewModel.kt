@@ -1,81 +1,25 @@
 package com.sam.nox.presentation
 
+import com.sam.nox.chat.ConfirmDecision
 import com.sam.nox.data.ChatRepository
+import com.sam.nox.mvi.UiEffect
+import com.sam.nox.mvi.UiEffectImpl
+import com.sam.nox.mvi.UiEvent
+import com.sam.nox.mvi.UiEventImpl
+import com.sam.nox.mvi.UiState
+import com.sam.nox.mvi.UiStateImpl
 import com.sam.nox.ui.orb.NoxMood
+import com.sam.nox.voice.VoiceInput
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Quem enviou a mensagem. */
-enum class Author { User, Nox, Error }
-
-/** Uma mensagem exibida na conversa. */
-data class Message(
-    val id: Long,
-    val author: Author,
-    val text: String,
-)
-
 /**
- * Entrada de voz (microfone + transcrição). A implementação concreta no desktop
- * reúne o microfone e o Whisper; pode ser nula quando não há modelo disponível.
- */
-interface VoiceInput {
-    /** Começa a gravar o microfone. */
-    fun start()
-
-    /** Encerra a gravação e devolve o texto transcrito. */
-    suspend fun stopAndTranscribe(): String
-}
-
-/** Estado observável da tela de chat. */
-data class ChatUiState(
-    val messages: List<Message> = emptyList(),
-    val draft: String = "",
-    val mood: NoxMood = NoxMood.Idle,
-    val isSending: Boolean = false,
-    val modelName: String = "",
-    /** Microfone capturando agora. */
-    val micOn: Boolean = false,
-    /** True quando há entrada de voz disponível (modelo Whisper carregado). */
-    val micAvailable: Boolean = false,
-    /** True por ~700ms após o clique no orbe (cutucada). */
-    val poked: Boolean = false,
-    /** Modo debug: quando != null, força o estado do orbe (ignora o fluxo real). */
-    val moodOverride: NoxMood? = null,
-    /** Ação aguardando confirmação do usuário (ex.: criar repo). Null = nenhuma. */
-    val pendingConfirmation: String? = null,
-) {
-    /** Estado efetivo que o orbe desenha: o override do debug ou o derivado. */
-    val effectiveMood: NoxMood get() = moodOverride ?: mood
-
-    /** Enviar desabilitado quando vazio, ou durante requisição/transcrição. */
-    val sendEnabled: Boolean get() = draft.isNotBlank() && !isSending
-    /** Microfone bloqueado durante Thinking/Speaking. */
-    val micEnabled: Boolean get() = micAvailable && !isSending && mood != NoxMood.Speaking
-
-    val placeholder: String get() = if (micOn) "Ouvindo… fale ou digite" else "Fale com o Nox…"
-    val statusHint: String get() = when {
-        moodOverride != null -> "Debug: estado forçado"
-        micOn -> "Ouvindo pelo microfone"
-        else -> when (mood) {
-            NoxMood.Idle -> "Pergunte qualquer coisa"
-            NoxMood.Listening -> "Acompanhando o que você digita"
-            NoxMood.Thinking -> "Consultando o modelo"
-            NoxMood.Speaking -> "Resposta recebida"
-            NoxMood.Error -> "Veja os detalhes na conversa"
-        }
-    }
-}
-
-/**
- * ViewModel da conversa. Expõe [uiState] como [StateFlow] e deriva o [NoxMood]:
+ * ViewModel da conversa. Compõe os papéis MVI por delegação (ver `com.sam.nox.mvi`):
+ * estado observável ([UiState]), eventos de entrada ([UiEvent]) e efeitos ([UiEffect]).
+ * Deriva o [NoxMood]:
  *
  * - campo vazio e mic desligado → Idle; texto no campo ou mic ligado → Listening;
  * - requisição em andamento → Thinking;
@@ -83,67 +27,106 @@ data class ChatUiState(
  * - falha → Error.
  *
  * A cutucada ([ChatUiState.poked]) é um booleano separado de 700ms.
+ *
+ * Estado interno (não exposto):
+ * - [lastInputWasVoice]: a última entrada foi por voz (para falar a resposta de volta).
+ * - [suppressNextDraftReset]: o próximo [ChatUiEvent.DraftChanged] vem de uma atualização
+ *   programática do rascunho (transcrição injetada), não de digitação — não limpar [lastInputWasVoice].
+ * - [repository]: criado pela [repositoryFactory] com o confirm desta ViewModel (uma ação que
+ *   exige confirmação pausa até o usuário aprovar/recusar).
+ * - [pendingDeferred]: confirmação pendente, resolvida por [ChatUiEvent.ResolveConfirmation].
+ * - [commandHistory]/[historyIndex]: histórico de envios e índice de navegação (-1 = não navegando).
+ *
+ * @param scope Escopo de corrotinas que executa as operações assíncronas da tela.
+ * @param repositoryFactory Cria o [ChatRepository] recebendo o callback de confirmação desta ViewModel.
+ * @param voice Entrada de voz (microfone + transcrição); null quando não há modelo disponível.
+ * @param speak Fala um texto em voz alta (TTS); null quando não há síntese de voz.
  */
 class ChatViewModel(
     private val scope: CoroutineScope,
-    repositoryFactory: (confirm: suspend (String) -> Boolean) -> ChatRepository,
+    repositoryFactory: (confirm: suspend (toolName: String, preview: String) -> ConfirmDecision) -> ChatRepository,
     private val voice: VoiceInput? = null,
-    /** Fala um texto em voz alta (TTS). Null = sem síntese de voz. */
     private val speak: (suspend (String) -> Unit)? = null,
-) {
-    /** True quando a próxima mensagem foi ditada por voz (para falar a resposta de volta). */
+) : UiState<ChatUiState> by UiStateImpl(ChatUiState()),
+    UiEvent<ChatUiEvent> by UiEventImpl(),
+    UiEffect<ChatUiEffect> by UiEffectImpl() {
+
     private var lastInputWasVoice = false
 
-    /**
-     * True quando o próximo `onDraftChange` vem de uma atualização programática do
-     * rascunho (ex.: transcrição de voz injetada no campo) e não de digitação do
-     * usuário — nesse caso não devemos limpar [lastInputWasVoice].
-     */
     private var suppressNextDraftReset = false
-    // O repository recebe o confirm deste ViewModel, resolvendo a dependência:
-    // uma ação que exige confirmação pausa aqui até o usuário aprovar/recusar.
+
     private val repository: ChatRepository = repositoryFactory(::requestConfirmation)
 
-    /** Deferred da confirmação atualmente pendente (resolvido por approve/reject). */
-    private var pendingDeferred: CompletableDeferred<Boolean>? = null
-
-    private val _uiState = MutableStateFlow(
-        ChatUiState(
-            modelName = repository.modelName,
-            micAvailable = voice != null,
-            messages = listOf(
-                Message(nextId(), Author.Nox, "Oi, Samuel. Eu sou o Nox. Em que posso ajudar?"),
-            ),
-        ),
-    )
-    val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
+    private var pendingDeferred: CompletableDeferred<ConfirmDecision>? = null
 
     private var speakingJob: Job? = null
     private var pokeJob: Job? = null
 
-    /** Chamado pelo cliente quando uma ação precisa de confirmação; suspende até decidir. */
-    private suspend fun requestConfirmation(preview: String): Boolean {
-        val deferred = CompletableDeferred<Boolean>()
-        pendingDeferred = deferred
-        _uiState.update { it.copy(pendingConfirmation = preview) }
-        val approved = deferred.await()
-        _uiState.update { it.copy(pendingConfirmation = null) }
-        pendingDeferred = null
-        return approved
+    private val commandHistory = mutableListOf<String>()
+
+    private var historyIndex = -1
+
+    init {
+        setState {
+            copy(
+                content = content.copy(
+                    modelName = repository.modelName,
+                    micAvailable = voice != null,
+                    messages = listOf(
+                        Message(nextId(), Author.Nox, "Oi, Samuel. Eu sou o Nox. Em que posso ajudar?"),
+                    ),
+                ),
+            )
+        }
+        handleEvents()
     }
 
-    /** UI: usuário aprovou a ação pendente. */
-    fun approveAction() { pendingDeferred?.complete(true) }
+    /** Despacha um [ChatUiEvent] para ser processado por esta ViewModel. */
+    fun onSendEvent(event: ChatUiEvent) {
+        scope.launch { sendEvent(event) }
+    }
 
-    /** UI: usuário recusou a ação pendente. */
-    fun rejectAction() { pendingDeferred?.complete(false) }
+    private fun handleEvents() {
+        scope.launch {
+            eventFlow.collect { event ->
+                when (event) {
+                    is ChatUiEvent.DraftChanged -> onDraftChange(event.value)
+                    ChatUiEvent.Send -> send()
+                    ChatUiEvent.Reset -> reset()
+                    ChatUiEvent.ToggleMic -> toggleMic()
+                    ChatUiEvent.Poke -> poke()
+                    ChatUiEvent.HistoryPrevious -> historyPrevious()
+                    ChatUiEvent.HistoryNext -> historyNext()
+                    is ChatUiEvent.SetMoodOverride -> setMoodOverride(event.mood)
+                    is ChatUiEvent.ResolveConfirmation -> pendingDeferred?.complete(event.decision)
+                }
+            }
+        }
+    }
 
-    /** Histórico das mensagens enviadas (mais antiga → mais recente) e índice de navegação. */
-    private val commandHistory = mutableListOf<String>()
-    private var historyIndex = -1 // -1 = não navegando (rascunho atual)
+    /** Atalho para atualizar só o conteúdo (sem overlays de loading/erro). */
+    private fun updateContent(block: ChatUiState.() -> ChatUiState) {
+        setState { copy(content = content.block()) }
+    }
+
+    /**
+     * Chamado pelo cliente quando uma ação precisa de confirmação; suspende até decidir.
+     * `toolName` faz parte do contrato do callback (o cliente o fornece), mas a UI não
+     * precisa dele — o `preview` já descreve a ação ao usuário.
+     */
+    @Suppress("UnusedParameter")
+    private suspend fun requestConfirmation(toolName: String, preview: String): ConfirmDecision {
+        val deferred = CompletableDeferred<ConfirmDecision>()
+        pendingDeferred = deferred
+        updateContent { copy(pendingConfirmation = preview) }
+        val decision = deferred.await()
+        updateContent { copy(pendingConfirmation = null) }
+        pendingDeferred = null
+        return decision
+    }
 
     /** Atualiza o rascunho e, se ocioso, reflete Listening/Idle no orbe. */
-    fun onDraftChange(value: String) {
+    private fun onDraftChange(value: String) {
         historyIndex = -1 // digitar sai da navegação do histórico
         if (suppressNextDraftReset) {
             // Mudança programática (transcrição injetada no draft): não trata como digitação.
@@ -151,30 +134,32 @@ class ChatViewModel(
         } else {
             lastInputWasVoice = false // digitou → responder em texto
         }
-        _uiState.update { s ->
+        updateContent {
             // Digitar não deve interromper uma animação em curso (pensando/falando).
-            val mood = if (s.isSending || s.mood == NoxMood.Thinking || s.mood == NoxMood.Speaking) {
-                s.mood
-            } else {
-                restingMood(text = value, micOn = s.micOn)
-            }
-            s.copy(draft = value, mood = mood)
+            val newMood =
+                if (isSending || mood == NoxMood.Thinking || mood == NoxMood.Speaking) {
+                    mood
+                } else {
+                    restingMood(text = value, micOn = micOn)
+                }
+            copy(draft = value, mood = newMood)
         }
     }
 
     /** Seta ↑: traz a mensagem enviada anterior para o campo (como no terminal). */
-    fun historyPrevious() {
+    private fun historyPrevious() {
         if (commandHistory.isEmpty()) return
-        historyIndex = when {
-            historyIndex == -1 -> commandHistory.lastIndex
-            historyIndex > 0 -> historyIndex - 1
-            else -> 0
-        }
+        historyIndex =
+            when {
+                historyIndex == -1 -> commandHistory.lastIndex
+                historyIndex > 0 -> historyIndex - 1
+                else -> 0
+            }
         setDraftFromHistory()
     }
 
     /** Seta ↓: avança para a mensagem mais recente; no fim, limpa o campo. */
-    fun historyNext() {
+    private fun historyNext() {
         if (historyIndex == -1) return
         historyIndex = if (historyIndex < commandHistory.lastIndex) historyIndex + 1 else -1
         setDraftFromHistory()
@@ -182,61 +167,64 @@ class ChatViewModel(
 
     private fun setDraftFromHistory() {
         val text = if (historyIndex == -1) "" else commandHistory[historyIndex]
-        _uiState.update { it.copy(draft = text) }
+        updateContent { copy(draft = text) }
     }
 
     /** Debug: força um estado do orbe (ou null para voltar ao automático). */
-    fun setMoodOverride(mood: NoxMood?) {
-        _uiState.update { it.copy(moodOverride = mood) }
+    private fun setMoodOverride(mood: NoxMood?) {
+        updateContent { copy(moodOverride = mood) }
     }
 
     /** Cutucada: clique no orbe. Dura 700ms sobre o estado atual. */
-    fun poke() {
+    private fun poke() {
         pokeJob?.cancel()
-        _uiState.update { it.copy(poked = true) }
-        pokeJob = scope.launch {
-            delay(700)
-            _uiState.update { it.copy(poked = false) }
-        }
+        updateContent { copy(poked = true) }
+        pokeJob =
+            scope.launch {
+                delay(700)
+                updateContent { copy(poked = false) }
+            }
     }
 
     /** Liga/desliga o microfone. Ao desligar, transcreve e põe o texto no rascunho. */
-    fun toggleMic() {
-        val s = _uiState.value
+    private fun toggleMic() {
+        val s = stateFlow.value.content
         val v = voice ?: return
         if (!s.micEnabled && !s.micOn) return
 
         if (!s.micOn) {
             v.start()
-            _uiState.update { it.copy(micOn = true, mood = NoxMood.Listening) }
+            updateContent { copy(micOn = true, mood = NoxMood.Listening) }
         } else {
-            _uiState.update { it.copy(micOn = false) }
+            updateContent { copy(micOn = false) }
             scope.launch {
-                val text = try {
-                    v.stopAndTranscribe().trim()
-                } catch (e: Throwable) {
-                    ""
-                }
+                val text =
+                    try {
+                        v.stopAndTranscribe().trim()
+                    } catch (e: Throwable) {
+                        ""
+                    }
                 if (text.isNotEmpty()) lastInputWasVoice = true
                 // A atualização do draft abaixo é programática: evita que o
                 // onDraftChange resultante trate isto como digitação e limpe lastInputWasVoice.
                 suppressNextDraftReset = true
-                _uiState.update { st ->
-                    val merged = (st.draft.trim() + " " + text).trim()
-                    val mood = if (st.isSending || st.mood == NoxMood.Thinking || st.mood == NoxMood.Speaking) {
-                        st.mood
-                    } else {
-                        restingMood(text = merged, micOn = false)
-                    }
-                    st.copy(draft = merged, mood = mood)
+                updateContent {
+                    val merged = (draft.trim() + " " + text).trim()
+                    val newMood =
+                        if (isSending || mood == NoxMood.Thinking || mood == NoxMood.Speaking) {
+                            mood
+                        } else {
+                            restingMood(text = merged, micOn = false)
+                        }
+                    copy(draft = merged, mood = newMood)
                 }
             }
         }
     }
 
     /** Envia o rascunho atual. */
-    fun send() {
-        val state = _uiState.value
+    private fun send() {
+        val state = stateFlow.value.content
         val text = state.draft.trim()
         if (text.isEmpty() || state.isSending) return
 
@@ -246,11 +234,13 @@ class ChatViewModel(
 
         speakingJob?.cancel()
         // Enviar sempre desliga o microfone.
-        if (state.micOn) { runCatching { scope.launch { voice?.stopAndTranscribe() } } }
+        if (state.micOn) {
+            runCatching { scope.launch { voice?.stopAndTranscribe() } }
+        }
 
-        _uiState.update {
-            it.copy(
-                messages = it.messages + Message(nextId(), Author.User, text),
+        updateContent {
+            copy(
+                messages = messages + Message(nextId(), Author.User, text),
                 draft = "",
                 isSending = true,
                 micOn = false,
@@ -276,13 +266,13 @@ class ChatViewModel(
     fun close() = repository.close()
 
     /** Começa uma conversa nova. */
-    fun reset() {
+    private fun reset() {
         speakingJob?.cancel()
         repository.reset()
-        _uiState.update {
+        updateContent {
             ChatUiState(
-                modelName = repository.modelName,
-                micAvailable = it.micAvailable,
+                modelName = modelName,
+                micAvailable = micAvailable,
                 messages = listOf(
                     Message(nextId(), Author.Nox, "Conversa nova. Pode falar."),
                 ),
@@ -291,9 +281,9 @@ class ChatViewModel(
     }
 
     private fun finishWithReply(reply: String) {
-        _uiState.update {
-            it.copy(
-                messages = it.messages + Message(nextId(), Author.Nox, reply),
+        updateContent {
+            copy(
+                messages = messages + Message(nextId(), Author.Nox, reply),
                 isSending = false,
                 mood = NoxMood.Speaking,
             )
@@ -308,9 +298,9 @@ class ChatViewModel(
     }
 
     private fun finishWithError(message: String) {
-        _uiState.update {
-            it.copy(
-                messages = it.messages + Message(nextId(), Author.Error, message),
+        updateContent {
+            copy(
+                messages = messages + Message(nextId(), Author.Error, message),
                 isSending = false,
                 mood = NoxMood.Error,
             )
@@ -320,25 +310,29 @@ class ChatViewModel(
 
     /** Após falar/erro, volta a Listening (se há rascunho ou mic) ou Idle. */
     private fun scheduleBackToRest(millis: Long) {
-        speakingJob = scope.launch {
-            delay(millis)
-            // Força a saída de Speaking/Error: só não interrompe se um novo envio começou.
-            _uiState.update { s ->
-                if (s.isSending || s.mood == NoxMood.Thinking) s
-                else s.copy(mood = restingMood(s.draft, s.micOn))
+        speakingJob =
+            scope.launch {
+                delay(millis)
+                // Força a saída de Speaking/Error: só não interrompe se um novo envio começou.
+                updateContent {
+                    if (isSending || mood == NoxMood.Thinking) {
+                        this
+                    } else {
+                        copy(mood = restingMood(draft, micOn))
+                    }
+                }
             }
-        }
     }
 
     /** Estado de repouso puro: Listening se há texto ou mic ligado; senão Idle. */
     private fun restingMood(text: String, micOn: Boolean): NoxMood =
         if (text.isNotBlank() || micOn) NoxMood.Listening else NoxMood.Idle
 
-    private fun speakMillisFor(text: String): Long =
-        (1200L + text.length * 22L).coerceAtMost(4200L)
+    private fun speakMillisFor(text: String): Long = (1200L + text.length * 22L).coerceAtMost(4200L)
 
     companion object {
         private var counter = 0L
+
         private fun nextId(): Long = ++counter
     }
 }
