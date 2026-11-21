@@ -11,6 +11,11 @@ A lógica de negócio DEVE ter testes de unidade, e a cobertura de instruções 
 limite mínimo (meta: 90% localmente nos hooks; o CI exige ao menos 70% geral e 80% nos arquivos
 modificados). A cobertura DEVE ser medida por relatório (JaCoCo/Kover) e verificável por script.
 
+> Nota de implementação: a medição de cobertura via Kover está bloqueada por uma
+> incompatibilidade conhecida do Kover com o plugin `androidMultiplatformLibrary` do AGP 9
+> (kotlinx-kover#776). Deve ser habilitada quando o fix do Kover estiver disponível; até lá,
+> esta meta permanece como alvo, não gate ativo.
+
 #### Scenario: Cobertura local abaixo da meta
 - **WHEN** o desenvolvedor roda os testes e a cobertura de instruções fica abaixo da meta local
 - **THEN** o script de verificação de cobertura falha e informa o percentual atual e o exigido
