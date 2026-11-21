@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
@@ -35,6 +35,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sam.nox.chat.ConfirmDecision
+import com.sam.nox.presentation.ChatUiEvent
 import com.sam.nox.presentation.ChatUiState
 import com.sam.nox.ui.orb.NoxMood
 import com.sam.nox.ui.theme.NoxTheme
@@ -47,25 +49,14 @@ import kotlin.math.min
  */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
-fun ChatScreen(
-    state: ChatUiState,
-    onDraftChange: (String) -> Unit,
-    onSend: () -> Unit,
-    onReset: () -> Unit,
-    onToggleMic: () -> Unit,
-    onPoke: () -> Unit,
-    onSetMoodOverride: (NoxMood?) -> Unit,
-    onApproveAction: () -> Unit,
-    onRejectAction: () -> Unit,
-    onHistoryPrevious: () -> Unit,
-    onHistoryNext: () -> Unit,
-) {
+fun ChatScreen(state: ChatUiState, onEvent: (ChatUiEvent) -> Unit) {
     val colors = NoxTheme.colors
     var size by remember { mutableStateOf(Offset.Zero) } // largura/altura da janela em px
     var look by remember { mutableStateOf(Offset.Zero) } // deslocamento do rosto em dp
 
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxSize()
             .background(colors.bg)
             .onGloballyPositioned { size = Offset(it.size.width.toFloat(), it.size.height.toFloat()) }
@@ -74,36 +65,36 @@ fun ChatScreen(
                 if (size.x > 0f && size.y > 0f) {
                     val nx = (pos.x - size.x / 2f) / (size.x / 2f)
                     val ny = (pos.y - size.y / 2f) / (size.y / 2f)
-                    look = Offset(
-                        x = max(-1f, min(1f, nx)) * 14f,
-                        y = max(-1f, min(1f, ny)) * 10f,
-                    )
+                    look =
+                        Offset(
+                            x = max(-1f, min(1f, nx)) * 14f,
+                            y = max(-1f, min(1f, ny)) * 10f,
+                        )
                 }
-            }
-            .onPointerEvent(PointerEventType.Exit) { look = Offset.Zero },
+            }.onPointerEvent(PointerEventType.Exit) { look = Offset.Zero },
     ) {
         TitleBar(
             moodOverride = state.moodOverride,
-            onSetMoodOverride = onSetMoodOverride,
+            onSetMoodOverride = { onEvent(ChatUiEvent.SetMoodOverride(it)) },
         )
         Row(modifier = Modifier.fillMaxSize()) {
             OrbPanel(
                 mood = state.effectiveMood,
                 look = look,
                 poked = state.poked,
-                onPoke = onPoke,
+                onPoke = { onEvent(ChatUiEvent.Poke) },
                 statusHint = state.statusHint,
                 modifier = Modifier.widthIn(min = 340.dp),
             )
             VerticalLine()
             ChatPanel(
                 state = state,
-                onDraftChange = onDraftChange,
-                onSend = onSend,
-                onReset = onReset,
-                onToggleMic = onToggleMic,
-                onHistoryPrevious = onHistoryPrevious,
-                onHistoryNext = onHistoryNext,
+                onDraftChange = { onEvent(ChatUiEvent.DraftChanged(it)) },
+                onSend = { onEvent(ChatUiEvent.Send) },
+                onReset = { onEvent(ChatUiEvent.Reset) },
+                onToggleMic = { onEvent(ChatUiEvent.ToggleMic) },
+                onHistoryPrevious = { onEvent(ChatUiEvent.HistoryPrevious) },
+                onHistoryNext = { onEvent(ChatUiEvent.HistoryNext) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -113,8 +104,9 @@ fun ChatScreen(
     state.pendingConfirmation?.let { preview ->
         ConfirmActionDialog(
             preview = preview,
-            onApprove = onApproveAction,
-            onReject = onRejectAction,
+            onApprove = { onEvent(ChatUiEvent.ResolveConfirmation(ConfirmDecision.APPROVE_ONCE)) },
+            onApproveAlways = { onEvent(ChatUiEvent.ResolveConfirmation(ConfirmDecision.APPROVE_ALWAYS)) },
+            onReject = { onEvent(ChatUiEvent.ResolveConfirmation(ConfirmDecision.REJECT)) },
         )
     }
 }
@@ -124,17 +116,20 @@ fun ChatScreen(
 private fun ConfirmActionDialog(
     preview: String,
     onApprove: () -> Unit,
+    onApproveAlways: () -> Unit,
     onReject: () -> Unit,
 ) {
     val colors = NoxTheme.colors
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .widthIn(max = 420.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(colors.surface)
@@ -149,20 +144,36 @@ private fun ConfirmActionDialog(
                 modifier = Modifier.padding(top = 10.dp),
             )
             Row(
-                modifier = Modifier
+                modifier =
+                Modifier
                     .fillMaxWidth()
                     .padding(top = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                // "Permitir sempre" à esquerda: aprova e não volta a perguntar por
+                // esta ferramenta durante a conversa atual.
                 Box(
-                    modifier = Modifier
+                    modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(onClick = onApproveAlways)
+                        .padding(horizontal = 8.dp, vertical = 9.dp),
+                ) { Text("Permitir sempre", color = colors.accent, fontSize = 14.sp, fontWeight = FontWeight.Medium) }
+
+                Box(Modifier.weight(1f))
+
+                Box(
+                    modifier =
+                    Modifier
                         .clip(RoundedCornerShape(10.dp))
                         .border(1.dp, colors.line, RoundedCornerShape(10.dp))
                         .clickable(onClick = onReject)
                         .padding(horizontal = 16.dp, vertical = 9.dp),
                 ) { Text("Recusar", color = colors.text, fontSize = 14.sp) }
                 Box(
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .clip(RoundedCornerShape(10.dp))
                         .background(colors.user)
                         .clickable(onClick = onApprove)
@@ -174,13 +185,11 @@ private fun ConfirmActionDialog(
 }
 
 @Composable
-private fun TitleBar(
-    moodOverride: NoxMood?,
-    onSetMoodOverride: (NoxMood?) -> Unit,
-) {
+private fun TitleBar(moodOverride: NoxMood?, onSetMoodOverride: (NoxMood?) -> Unit) {
     val colors = NoxTheme.colors
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .height(44.dp)
             .background(colors.panel),
@@ -188,7 +197,8 @@ private fun TitleBar(
     ) {
         Text("Nox", color = colors.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 10.dp),
         ) {
@@ -200,17 +210,15 @@ private fun TitleBar(
 
 /** Menu de debug na barra: Debug → Estados → (força cada NoxMood ou automático). */
 @Composable
-private fun DebugMenu(
-    moodOverride: NoxMood?,
-    onSetMoodOverride: (NoxMood?) -> Unit,
-) {
+private fun DebugMenu(moodOverride: NoxMood?, onSetMoodOverride: (NoxMood?) -> Unit) {
     val colors = NoxTheme.colors
     var open by remember { mutableStateOf(false) }
     var statesOpen by remember { mutableStateOf(false) }
 
     val active = moodOverride != null
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(if (active) colors.user.copy(alpha = 0.25f) else Color.Transparent)
             .border(1.dp, if (active) colors.user else colors.line, RoundedCornerShape(8.dp))
@@ -223,7 +231,10 @@ private fun DebugMenu(
 
     DropdownMenu(
         expanded = open,
-        onDismissRequest = { open = false; statesOpen = false },
+        onDismissRequest = {
+            open = false
+            statesOpen = false
+        },
     ) {
         // Submenu "Estados"
         DropdownMenuItem(
@@ -242,7 +253,8 @@ private fun DebugMenu(
                     },
                     onClick = {
                         onSetMoodOverride(mood)
-                        open = false; statesOpen = false
+                        open = false
+                        statesOpen = false
                     },
                 )
             }
@@ -252,7 +264,8 @@ private fun DebugMenu(
             text = { Text("Automático (desligar debug)") },
             onClick = {
                 onSetMoodOverride(null)
-                open = false; statesOpen = false
+                open = false
+                statesOpen = false
             },
         )
     }
