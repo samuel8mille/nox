@@ -92,11 +92,15 @@ class ElevenLabsSpeaker(
     @Serializable
     private data class TtsRequest(val text: String, @SerialName("model_id") val modelId: String)
 
+    /** Resolução da chave e da voz a partir de system properties / variáveis de ambiente. */
     companion object {
+        /** Lê a chave da API de `elevenlabs.key` (system property) ou `ELEVENLABS_API_KEY`. */
         fun resolveKey(): String? = System.getProperty("elevenlabs.key") ?: System.getenv("ELEVENLABS_API_KEY")
 
-        // Voz padrão (pode ser sobrescrita por elevenlabs.voice / ELEVENLABS_VOICE_ID).
-        // "Sarah" — voz feminina natural, boa em PT-BR no modelo multilingual.
+        /**
+         * Voz padrão, sobrescritível por `elevenlabs.voice` / `ELEVENLABS_VOICE_ID`.
+         * O padrão "Sarah" (EXAVITQu4vr4xnSDxMaL) é feminino e natural em PT-BR no modelo multilingual.
+         */
         fun resolveVoice(): String = System.getProperty("elevenlabs.voice")
             ?: System.getenv("ELEVENLABS_VOICE_ID")
             ?: "EXAVITQu4vr4xnSDxMaL"

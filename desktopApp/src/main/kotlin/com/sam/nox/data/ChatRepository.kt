@@ -20,6 +20,10 @@ import com.sam.nox.tools.systemTools
  * - TAVILY_API_KEY: opcional (busca web).
  * - GITHUB_TOKEN: opcional (criar repositório/issue/PR).
  *
+ * @property modelName Id do modelo no Groq usado na conversa.
+ * @param apiKey Chave do Groq (obrigatória); por padrão resolvida do ambiente.
+ * @param tavilyKey Chave opcional do Tavily (busca web); null desliga a busca.
+ * @param githubToken Token opcional do GitHub; null desliga as ferramentas de GitHub.
  * @param confirm Pedido de confirmação para ações que alteram algo externo. Recebe o nome da
  *   ferramenta e o preview da ação, e devolve a decisão (recusar / aprovar uma vez / aprovar sempre
  *   nesta conversa).
@@ -53,11 +57,13 @@ class ChatRepository(
     /** Limpa o histórico, começando uma conversa nova (a memória persiste). */
     fun reset() = client.reset()
 
+    /** Libera os recursos do cliente LLM e encerra os servidores MCP. */
     fun close() {
         client.close()
         mcp.close()
     }
 
+    /** Resolução das chaves de API e montagem das ferramentas do chat. */
     companion object {
         /** Lê a API key do Groq de -Dgroq.key, depois de GROQ_API_KEY. */
         fun resolveApiKey(): String = System.getProperty("groq.key")

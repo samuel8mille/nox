@@ -6,7 +6,9 @@ package com.sam.nox.voice
  * [start] começa a gravar; [stopAndTranscribe] encerra e devolve o texto transcrito.
  */
 interface VoiceInput {
+    /** Começa a gravar o microfone. */
     fun start()
 
+    /** Encerra a gravação e devolve o texto transcrito. */
     suspend fun stopAndTranscribe(): String
 }

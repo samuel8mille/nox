@@ -124,6 +124,7 @@ class McpClient(
             ?: result.toString().take(2000)
     }
 
+    /** Encerra o processo do servidor MCP e fecha os streams. */
     fun close() {
         runCatching { writer?.close() }
         runCatching { process?.destroy() }

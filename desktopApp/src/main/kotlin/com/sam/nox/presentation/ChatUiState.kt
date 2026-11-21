@@ -6,6 +6,12 @@ import com.sam.nox.ui.orb.NoxMood
 /**
  * Estado de conteúdo da tela de chat.
  *
+ * @property title Título exibido no cabeçalho da conversa.
+ * @property messages Mensagens da conversa, da mais antiga para a mais recente.
+ * @property draft Texto atualmente digitado no campo de entrada.
+ * @property mood Estado de animação atual do orbe.
+ * @property isSending True enquanto há uma requisição ao modelo em andamento.
+ * @property modelName Nome do modelo LLM em uso.
  * @property micOn Microfone capturando agora.
  * @property micAvailable Há entrada de voz disponível (modelo Whisper carregado).
  * @property poked True por ~700ms após o clique no orbe (cutucada).
