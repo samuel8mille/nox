@@ -126,6 +126,11 @@ class OpenRouterClient(
      * Por padrão aprova tudo (sem confirmação).
      */
     private val confirm: suspend (preview: String) -> Boolean = { true },
+    /**
+     * Contexto extra injetado no system prompt a cada mensagem (ao lado da data/hora).
+     * Usado, por exemplo, para os fatos lembrados sobre o usuário. Vazio = nada a acrescentar.
+     */
+    private val extraContext: () -> String = { "" },
     private val httpClient: HttpClient = createHttpClient(),
     private val baseUrl: String = "https://openrouter.ai/api/v1",
 ) {
@@ -205,7 +210,8 @@ class OpenRouterClient(
     private suspend fun requestModel(modelId: String): ORMessage {
         val messages = buildList {
             if (systemPrompt != null) {
-                add(ORMessage(role = "system", content = currentContext() + "\n\n" + systemPrompt))
+                val extra = extraContext().trim().let { if (it.isEmpty()) "" else "\n\n$it" }
+                add(ORMessage(role = "system", content = currentContext() + extra + "\n\n" + systemPrompt))
             }
             addAll(history)
         }
@@ -279,6 +285,13 @@ class OpenRouterClient(
             Você tem uma ferramenta de pesquisa na web. Para perguntas sobre fatos, pessoas,
             lugares, eventos ou qualquer coisa que você não saiba com certeza, use a ferramenta
             de pesquisa antes de responder — não invente nem diga que não tem acesso à internet.
+
+            Você tem memória de longo prazo. SEMPRE que o usuário revelar um fato sobre si — o nome,
+            uma preferência, um projeto, onde mora, o que faz — chame a ferramenta lembrar IMEDIATAMENTE
+            para guardar esse fato, antes ou junto da sua resposta. Por exemplo, se ele disser "meu
+            nome é X" ou "eu trabalho com Y", chame lembrar com esse fato. Quando ele pedir para ver
+            o que você sabe, use listar_memorias; para esquecer algo, use esquecer. Os fatos que você
+            já guardou aparecem no seu contexto.
 
             Você também pode executar ações no computador do usuário através de ferramentas:
             rodar comandos no terminal (git, scripts), criar e ler arquivos, listar pastas, e
