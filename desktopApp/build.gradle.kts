@@ -28,38 +28,35 @@ dependencies {
 tasks.register<JavaExec>("runWhisperDemo") {
     group = "application"
     description = "Grava do microfone e transcreve com Whisper (offline)."
-    mainClass.set("com.sam.nox.WhisperDemoKt")
+    mainClass.set("com.sam.nox.voice.WhisperDemoKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
 }
-
 
 // Verifica a conexão MCP (lê ~/.nox/mcp.json, arranca servidores, lista ferramentas).
 // Uso: ./gradlew :desktopApp:runMcpSmoke
 tasks.register<JavaExec>("runMcpSmoke") {
     group = "verification"
     description = "Testa o McpManager: expande env, arranca servidores MCP e lista ferramentas."
-    mainClass.set("com.sam.nox.McpSmokeTestKt")
+    mainClass.set("com.sam.nox.smoke.McpSmokeTestKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
-
 
 // Teste ponta-a-ponta do chat com uma ação de GitHub via MCP (auto-aprova confirmações).
 // Uso: ./gradlew :desktopApp:runGithubChatSmoke
 tasks.register<JavaExec>("runGithubChatSmoke") {
     group = "verification"
     description = "Envia um comando de GitHub ao Nox e mostra a resposta (usa MCP)."
-    mainClass.set("com.sam.nox.GithubChatSmokeKt")
+    mainClass.set("com.sam.nox.smoke.GithubChatSmokeKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
-
 
 // Abre a galeria com os 5 estados do orbe lado a lado (inspeção visual).
 // Uso: ./gradlew :desktopApp:runOrbGallery
 tasks.register<JavaExec>("runOrbGallery") {
     group = "application"
     description = "Mostra os estados do orbe (Idle/Listening/Thinking/Speaking/Error)."
-    mainClass.set("com.sam.nox.GalleryMainKt")
+    mainClass.set("com.sam.nox.debug.GalleryMainKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
 

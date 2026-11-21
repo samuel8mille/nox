@@ -1,5 +1,6 @@
-package com.sam.nox
+package com.sam.nox.voice
 
+import com.sam.nox.Speaker
 import io.ktor.client.HttpClient
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
@@ -33,7 +34,6 @@ class ElevenLabsSpeaker(
     private val voiceId: String = resolveVoice(),
     private val modelId: String = "eleven_multilingual_v2",
 ) : Speaker {
-
     private val key: String? = apiKey?.takeIf { it.isNotBlank() }
 
     val available: Boolean get() = key != null
@@ -52,15 +52,17 @@ class ElevenLabsSpeaker(
     private suspend fun fetchPcm(text: String, apiKey: String): ByteArray? {
         // pcm_24000 = PCM 16-bit, mono, 24 kHz, little-endian.
         val url = "https://api.elevenlabs.io/v1/text-to-speech/$voiceId?output_format=pcm_24000"
-        val body = Json.encodeToString(
-            TtsRequest.serializer(),
-            TtsRequest(text = text, modelId = modelId),
-        )
-        val resp: HttpResponse = http.post(url) {
-            headers { append("xi-api-key", apiKey) }
-            contentType(ContentType.Application.Json)
-            setBody(body)
-        }
+        val body =
+            Json.encodeToString(
+                TtsRequest.serializer(),
+                TtsRequest(text = text, modelId = modelId),
+            )
+        val resp: HttpResponse =
+            http.post(url) {
+                headers { append("xi-api-key", apiKey) }
+                contentType(ContentType.Application.Json)
+                setBody(body)
+            }
         if (!resp.status.isSuccess()) return null
         return resp.readRawBytes()
     }
@@ -88,20 +90,15 @@ class ElevenLabsSpeaker(
     }
 
     @Serializable
-    private data class TtsRequest(
-        val text: String,
-        @SerialName("model_id") val modelId: String,
-    )
+    private data class TtsRequest(val text: String, @SerialName("model_id") val modelId: String)
 
     companion object {
-        fun resolveKey(): String? =
-            System.getProperty("elevenlabs.key") ?: System.getenv("ELEVENLABS_API_KEY")
+        fun resolveKey(): String? = System.getProperty("elevenlabs.key") ?: System.getenv("ELEVENLABS_API_KEY")
 
         // Voz padrão (pode ser sobrescrita por elevenlabs.voice / ELEVENLABS_VOICE_ID).
         // "Sarah" — voz feminina natural, boa em PT-BR no modelo multilingual.
-        fun resolveVoice(): String =
-            System.getProperty("elevenlabs.voice")
-                ?: System.getenv("ELEVENLABS_VOICE_ID")
-                ?: "EXAVITQu4vr4xnSDxMaL"
+        fun resolveVoice(): String = System.getProperty("elevenlabs.voice")
+            ?: System.getenv("ELEVENLABS_VOICE_ID")
+            ?: "EXAVITQu4vr4xnSDxMaL"
     }
 }

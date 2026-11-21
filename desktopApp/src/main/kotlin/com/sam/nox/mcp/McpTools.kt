@@ -1,4 +1,4 @@
-package com.sam.nox
+package com.sam.nox.mcp
 
 import com.sam.nox.chat.Tool
 import kotlinx.coroutines.runBlocking
@@ -24,9 +24,7 @@ private data class McpServerConfig(
 )
 
 @Serializable
-private data class McpConfig(
-    val mcpServers: Map<String, McpServerConfig> = emptyMap(),
-)
+private data class McpConfig(val mcpServers: Map<String, McpServerConfig> = emptyMap())
 
 /**
  * Gerencia os servidores MCP configurados: inicia-os, descobre suas ferramentas e as
@@ -34,9 +32,7 @@ private data class McpConfig(
  *
  * Use [loadTools] para obter as ferramentas e [close] para encerrar os processos.
  */
-class McpManager(
-    private val configFile: File = File(System.getProperty("user.home"), ".nox/mcp.json"),
-) {
+class McpManager(private val configFile: File = File(System.getProperty("user.home"), ".nox/mcp.json")) {
     private val json = Json { ignoreUnknownKeys = true }
     private val clients = mutableListOf<McpClient>()
 
@@ -65,8 +61,8 @@ class McpManager(
      * Variáveis inexistentes expandem para vazio. Entradas que resultem em valor
      * vazio são descartadas, para não passar um token em branco ao servidor.
      */
-    private fun expandEnv(env: Map<String, String>): Map<String, String> =
-        env.mapValues { (_, value) ->
+    private fun expandEnv(env: Map<String, String>): Map<String, String> = env
+        .mapValues { (_, value) ->
             Regex("""\$\{([^}]+)}""").replace(value) { m ->
                 val name = m.groupValues[1]
                 System.getenv(name) ?: System.getProperty(name) ?: ""
@@ -74,8 +70,11 @@ class McpManager(
         }.filterValues { it.isNotBlank() }
 
     private fun readConfig(): McpConfig? = try {
-        if (configFile.exists()) json.decodeFromString(McpConfig.serializer(), configFile.readText())
-        else null
+        if (configFile.exists()) {
+            json.decodeFromString(McpConfig.serializer(), configFile.readText())
+        } else {
+            null
+        }
     } catch (e: Throwable) {
         println("[MCP] erro ao ler ${configFile.path}: ${e.message}")
         null
@@ -90,21 +89,25 @@ class McpManager(
 /** Adapta uma ferramenta MCP para a interface Tool do Nox, exigindo confirmação. */
 private fun McpTool.toNoxTool(serverName: String, client: McpClient): Tool = Tool(
     // Prefixo pelo servidor evita colisão de nomes entre servidores.
-    name = "${serverName}__${name}".take(64),
+    name = "${serverName}__$name".take(64),
     description = description.ifBlank { "Ferramenta '$name' do servidor MCP '$serverName'." },
     parameters = inputSchema.ifEmptyObject(),
     requiresConfirmation = true,
     preview = { args ->
-        val argsText = args.entries.joinToString(", ") { (k, v) ->
-            "$k=${(v as? JsonPrimitive)?.content ?: v}"
-        }
+        val argsText =
+            args.entries.joinToString(", ") { (k, v) ->
+                "$k=${(v as? JsonPrimitive)?.content ?: v}"
+            }
         "Executar ferramenta MCP '$name' ($serverName)" + if (argsText.isNotBlank()) ": $argsText" else "."
     },
     execute = { args: Map<String, JsonElement> -> client.callTool(name, args) },
 )
 
 /** Garante um JSON Schema de objeto válido (alguns servidores omitem/entregam vazio). */
-private fun JsonObject.ifEmptyObject(): JsonObject =
-    if (this.isEmpty()) JsonObject(
+private fun JsonObject.ifEmptyObject(): JsonObject = if (this.isEmpty()) {
+    JsonObject(
         mapOf("type" to JsonPrimitive("object"), "properties" to JsonObject(emptyMap())),
-    ) else this
+    )
+} else {
+    this
+}

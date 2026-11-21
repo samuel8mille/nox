@@ -1,4 +1,4 @@
-package com.sam.nox
+package com.sam.nox.debug
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window

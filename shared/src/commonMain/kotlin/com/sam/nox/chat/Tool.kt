@@ -26,10 +26,20 @@ class Tool(
     val execute: suspend (args: Map<String, JsonElement>) -> String,
 )
 
+/**
+ * Decisão do usuário ao confirmar uma ação sensível.
+ *
+ * - [REJECT]: não executar.
+ * - [APPROVE_ONCE]: executar só desta vez.
+ * - [APPROVE_ALWAYS]: executar e não voltar a perguntar por esta ferramenta nesta conversa.
+ */
+enum class ConfirmDecision { REJECT, APPROVE_ONCE, APPROVE_ALWAYS }
+
 /** Schema para uma ferramenta sem parâmetros. */
-val noParameters: JsonObject = JsonObject(
-    mapOf(
-        "type" to kotlinx.serialization.json.JsonPrimitive("object"),
-        "properties" to JsonObject(emptyMap()),
-    ),
-)
+val noParameters: JsonObject =
+    JsonObject(
+        mapOf(
+            "type" to kotlinx.serialization.json.JsonPrimitive("object"),
+            "properties" to JsonObject(emptyMap()),
+        ),
+    )

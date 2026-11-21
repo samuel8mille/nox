@@ -18,7 +18,6 @@ package com.sam.nox.chat
  * chamada continua a ser executável (o cliente mantém o mapa completo por nome).
  */
 object ToolSelector {
-
     /** Teto padrão de ferramentas por requisição (abaixo do limite de 128 do Groq). */
     const val DEFAULT_MAX_TOOLS = 120
 
@@ -33,27 +32,85 @@ object ToolSelector {
      * Palavras-chave (minúsculas, sem acento) que ativam cada grupo MCP, por prefixo.
      * O prefixo corresponde ao nome do servidor em `mcp.json` (ver McpTools: `serverName__tool`).
      */
-    private val GROUP_KEYWORDS: Map<String, List<String>> = mapOf(
-        "github" to listOf(
-            "github", "git", "repo", "repositorio", "repositório", "pull request", "pr ",
-            "issue", "commit", "branch", "workflow", "action", "ci", "release", "tag",
-            "merge", "fork", "deploy",
-        ),
-        "google" to listOf(
-            "google", "gmail", "email", "e-mail", "mail", "correio",
-            "calendar", "calendario", "calendário", "agenda", "evento", "reuniao", "reunião",
-            "drive", "documento", "docs", "planilha", "sheets", "apresentacao", "slides",
-            "marcar", "agendar", "compromisso",
-        ),
-        "fs" to listOf(
-            "arquivo", "ficheiro", "pasta", "diretorio", "diretório", "file", "folder",
-            "ler arquivo", "escrever", "salvar em", "listar pasta",
-        ),
-        "browser" to listOf(
-            "navegar", "navegador", "browser", "site", "página", "pagina", "url",
-            "abrir no navegador", "clicar", "playwright", "screenshot", "web",
-        ),
-    )
+    private val GROUP_KEYWORDS: Map<String, List<String>> =
+        mapOf(
+            "github" to
+                listOf(
+                    "github",
+                    "git",
+                    "repo",
+                    "repositorio",
+                    "repositório",
+                    "pull request",
+                    "pr ",
+                    "issue",
+                    "commit",
+                    "branch",
+                    "workflow",
+                    "action",
+                    "ci",
+                    "release",
+                    "tag",
+                    "merge",
+                    "fork",
+                    "deploy",
+                ),
+            "google" to
+                listOf(
+                    "google",
+                    "gmail",
+                    "email",
+                    "e-mail",
+                    "mail",
+                    "correio",
+                    "calendar",
+                    "calendario",
+                    "calendário",
+                    "agenda",
+                    "evento",
+                    "reuniao",
+                    "reunião",
+                    "drive",
+                    "documento",
+                    "docs",
+                    "planilha",
+                    "sheets",
+                    "apresentacao",
+                    "slides",
+                    "marcar",
+                    "agendar",
+                    "compromisso",
+                ),
+            "fs" to
+                listOf(
+                    "arquivo",
+                    "ficheiro",
+                    "pasta",
+                    "diretorio",
+                    "diretório",
+                    "file",
+                    "folder",
+                    "ler arquivo",
+                    "escrever",
+                    "salvar em",
+                    "listar pasta",
+                ),
+            "browser" to
+                listOf(
+                    "navegar",
+                    "navegador",
+                    "browser",
+                    "site",
+                    "página",
+                    "pagina",
+                    "url",
+                    "abrir no navegador",
+                    "clicar",
+                    "playwright",
+                    "screenshot",
+                    "web",
+                ),
+        )
 
     /** Devolve o nome do grupo MCP de uma ferramenta, ou null se for do núcleo. */
     private fun groupOf(toolName: String): String? {
@@ -74,19 +131,22 @@ object ToolSelector {
         val text = normalize(recentText)
         val words = text.split(Regex("""\W+""")).filter { it.length >= 3 }.toSet()
 
-        val activeGroups = GROUP_KEYWORDS
-            .filterValues { keywords -> keywords.any { text.contains(normalize(it)) } }
-            .keys
+        val activeGroups =
+            GROUP_KEYWORDS
+                .filterValues { keywords -> keywords.any { text.contains(normalize(it)) } }
+                .keys
 
         val core = all.filter { groupOf(it.name) == null }
 
         // Para cada grupo ativo, inclui só as ferramentas mais relevantes à mensagem
         // (pontuadas por sobreposição de palavras com nome+descrição), até ao teto do grupo.
-        val fromActiveGroups = activeGroups.flatMap { group ->
-            all.filter { groupOf(it.name) == group }
-                .sortedByDescending { relevance(it, words) }
-                .take(maxToolsPerGroup)
-        }
+        val fromActiveGroups =
+            activeGroups.flatMap { group ->
+                all
+                    .filter { groupOf(it.name) == group }
+                    .sortedByDescending { relevance(it, words) }
+                    .take(maxToolsPerGroup)
+            }
 
         val selected = core + fromActiveGroups
 
