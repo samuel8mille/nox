@@ -31,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,10 +40,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -98,7 +97,8 @@ fun ChatPanel(
 private fun ChatHeader(modelName: String, onReset: () -> Unit) {
     val colors = NoxTheme.colors
     Row(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .border(width = 0.dp, color = Color.Transparent)
             .padding(horizontal = 32.dp, vertical = 16.dp),
@@ -121,7 +121,8 @@ private fun ChatHeader(modelName: String, onReset: () -> Unit) {
 @Composable
 private fun BottomLine() {
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .size(1.dp)
             .background(NoxTheme.colors.line),
@@ -140,7 +141,9 @@ private fun MessageList(state: ChatUiState, modifier: Modifier = Modifier) {
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 32.dp, vertical = 28.dp),
+        contentPadding =
+        androidx.compose.foundation.layout
+            .PaddingValues(horizontal = 32.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(state.messages, key = { it.id }) { msg -> MessageBubble(msg) }
@@ -154,62 +157,68 @@ private fun MessageList(state: ChatUiState, modifier: Modifier = Modifier) {
 private fun MessageBubble(message: Message) {
     val colors = NoxTheme.colors
     when (message.author) {
-        Author.User -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            Box(
-                modifier = Modifier
-                    .widthIn(max = 460.dp)
-                    .clip(RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp))
-                    .background(colors.user)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                Text(message.text, color = Color.White, fontSize = 15.sp)
+        Author.User ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Box(
+                    modifier =
+                    Modifier
+                        .widthIn(max = 460.dp)
+                        .clip(RoundedCornerShape(18.dp, 18.dp, 6.dp, 18.dp))
+                        .background(colors.user)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    Text(message.text, color = Color.White, fontSize = 15.sp)
+                }
             }
-        }
 
-        Author.Nox -> Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            NoxOrb(mood = NoxMood.Idle, size = 28.dp, compact = true)
-            Box(
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .widthIn(max = 500.dp)
-                    .clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
-                    .background(colors.surface)
-                    .border(1.dp, colors.line, RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+        Author.Nox ->
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Text(message.text, color = colors.text, fontSize = 15.sp)
+                NoxOrb(mood = NoxMood.Idle, size = 28.dp, compact = true)
+                Box(
+                    modifier =
+                    Modifier
+                        .padding(start = 10.dp)
+                        .widthIn(max = 500.dp)
+                        .clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
+                        .background(colors.surface)
+                        .border(1.dp, colors.line, RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    Text(message.text, color = colors.text, fontSize = 15.sp)
+                }
             }
-        }
 
-        Author.Error -> Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            NoxOrb(mood = NoxMood.Error, size = 28.dp, compact = true)
-            Column(
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .widthIn(max = 500.dp)
-                    .clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
-                    .background(colors.dangerBg)
-                    .border(1.dp, colors.danger, RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+        Author.Error ->
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Text(
-                    "Não consegui responder",
-                    color = colors.danger,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(message.text, color = colors.text, fontSize = 15.sp)
+                NoxOrb(mood = NoxMood.Error, size = 28.dp, compact = true)
+                Column(
+                    modifier =
+                    Modifier
+                        .padding(start = 10.dp)
+                        .widthIn(max = 500.dp)
+                        .clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
+                        .background(colors.dangerBg)
+                        .border(1.dp, colors.danger, RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        "Não consegui responder",
+                        color = colors.danger,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(message.text, color = colors.text, fontSize = 15.sp)
+                }
             }
-        }
     }
 }
 
@@ -219,7 +228,8 @@ private fun TypingIndicator() {
     Row(verticalAlignment = Alignment.Bottom) {
         NoxOrb(mood = NoxMood.Thinking, size = 28.dp, compact = true)
         Row(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .padding(start = 10.dp)
                 .clip(RoundedCornerShape(18.dp, 18.dp, 18.dp, 6.dp))
                 .background(colors.surface)
@@ -239,7 +249,8 @@ private fun TypingDot(delayMillis: Int) {
     val t by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
+        animationSpec =
+        infiniteRepeatable(
             animation = tween(1200, delayMillis = delayMillis, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
@@ -247,7 +258,8 @@ private fun TypingDot(delayMillis: Int) {
     )
     val colors = NoxTheme.colors
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .offset(y = (-3 * t).dp)
             .size(6.dp)
             .clip(CircleShape)
@@ -273,13 +285,15 @@ private fun Composer(
     val borderColor = colors.line
 
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .padding(start = 32.dp, end = 32.dp, top = 14.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(colors.surface)
@@ -293,7 +307,8 @@ private fun Composer(
             BasicTextField(
                 value = draft,
                 onValueChange = onDraftChange,
-                modifier = Modifier
+                modifier =
+                Modifier
                     .weight(1f)
                     .heightIn(min = 36.dp, max = 150.dp)
                     .padding(vertical = 8.dp)
@@ -308,16 +323,20 @@ private fun Composer(
                             }
                             // Setas navegam o histórico quando o texto é de uma linha.
                             event.key == Key.DirectionUp && singleLine -> {
-                                onHistoryPrevious(); true
+                                onHistoryPrevious()
+                                true
                             }
                             event.key == Key.DirectionDown && singleLine -> {
-                                onHistoryNext(); true
+                                onHistoryNext()
+                                true
                             }
                             else -> false
                         }
                     },
                 textStyle = TextStyle(color = colors.text, fontSize = 15.sp, lineHeight = 22.sp),
-                cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent),
+                cursorBrush =
+                androidx.compose.ui.graphics
+                    .SolidColor(colors.accent),
                 maxLines = 6,
                 decorationBox = { inner ->
                     // Placeholder e campo ocupam a mesma caixa, alinhados verticalmente,
@@ -364,14 +383,16 @@ private fun MicButton(on: Boolean, enabled: Boolean, onClick: () -> Unit) {
     ) {
         if (on) {
             Box(
-                modifier = Modifier
+                modifier =
+                Modifier
                     .size((40 + ring * 10).dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(colors.micBg.copy(alpha = (1f - ring) * 0.6f)),
             )
         }
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(bg)
@@ -387,7 +408,8 @@ private fun MicButton(on: Boolean, enabled: Boolean, onClick: () -> Unit) {
 private fun SendButton(enabled: Boolean, onClick: () -> Unit) {
     val colors = NoxTheme.colors
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .size(40.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(colors.user.copy(alpha = if (enabled) 1f else 0.35f))
@@ -402,7 +424,8 @@ private fun SendButton(enabled: Boolean, onClick: () -> Unit) {
 private fun GhostButton(text: String, onClick: () -> Unit) {
     val colors = NoxTheme.colors
     Box(
-        modifier = Modifier
+        modifier =
+        Modifier
             .clip(RoundedCornerShape(10.dp))
             .border(1.dp, colors.line, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)

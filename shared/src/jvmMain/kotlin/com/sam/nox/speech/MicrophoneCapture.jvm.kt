@@ -13,18 +13,20 @@ import javax.sound.sampled.TargetDataLine
  * as amostras de 16 bits para floats normalizados em [-1, 1].
  */
 object MicrophoneCapture {
-
     private const val SAMPLE_RATE = 16_000f
     private const val SAMPLE_SIZE_BITS = 16
     private const val CHANNELS = 1
 
-    private val format = AudioFormat(
-        SAMPLE_RATE,
-        SAMPLE_SIZE_BITS,
-        CHANNELS,
-        /* signed = */ true,
-        /* bigEndian = */ false,
-    )
+    private val format =
+        AudioFormat(
+            SAMPLE_RATE,
+            SAMPLE_SIZE_BITS,
+            CHANNELS,
+            // signed =
+            true,
+            // bigEndian =
+            false,
+        )
 
     @Volatile
     private var recording = false

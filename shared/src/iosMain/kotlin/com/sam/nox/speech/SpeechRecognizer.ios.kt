@@ -7,10 +7,7 @@ package com.sam.nox.speech
  * (ainda não implementado).
  */
 actual class SpeechRecognizer {
-    actual suspend fun transcribe(
-        samples: FloatArray,
-        language: String?,
-    ): TranscriptionResult =
+    actual suspend fun transcribe(samples: FloatArray, language: String?): TranscriptionResult =
         throw NotImplementedError("SpeechRecognizer ainda não implementado no iOS")
 
     actual fun close() = Unit

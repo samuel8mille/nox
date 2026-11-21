@@ -7,10 +7,7 @@ package com.sam.nox.speech
  * (ainda não implementado). Ver [[whisper-android-integration]].
  */
 actual class SpeechRecognizer {
-    actual suspend fun transcribe(
-        samples: FloatArray,
-        language: String?,
-    ): TranscriptionResult =
+    actual suspend fun transcribe(samples: FloatArray, language: String?): TranscriptionResult =
         throw NotImplementedError("SpeechRecognizer ainda não implementado no Android")
 
     actual fun close() = Unit

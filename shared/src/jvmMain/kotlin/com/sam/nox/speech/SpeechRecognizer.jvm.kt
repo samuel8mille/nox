@@ -17,31 +17,30 @@ actual class SpeechRecognizer private constructor(
     private val whisper: WhisperJNI,
     private val context: WhisperContext,
 ) {
+    actual suspend fun transcribe(samples: FloatArray, language: String?): TranscriptionResult =
+        withContext(Dispatchers.IO) {
+            val params =
+                WhisperFullParams().apply {
+                    if (language != null) this.language = language
+                    printProgress = false
+                    printRealtime = false
+                }
 
-    actual suspend fun transcribe(
-        samples: FloatArray,
-        language: String?,
-    ): TranscriptionResult = withContext(Dispatchers.IO) {
-        val params = WhisperFullParams().apply {
-            if (language != null) this.language = language
-            printProgress = false
-            printRealtime = false
-        }
-
-        val result = whisper.full(context, params, samples, samples.size)
-        if (result != 0) {
-            error("Falha na transcrição do Whisper (código $result)")
-        }
-
-        val segments = whisper.fullNSegments(context)
-        val text = buildString {
-            for (i in 0 until segments) {
-                append(whisper.fullGetSegmentText(context, i))
+            val result = whisper.full(context, params, samples, samples.size)
+            if (result != 0) {
+                error("Falha na transcrição do Whisper (código $result)")
             }
-        }.trim()
 
-        TranscriptionResult(text = text, language = language)
-    }
+            val segments = whisper.fullNSegments(context)
+            val text =
+                buildString {
+                    for (i in 0 until segments) {
+                        append(whisper.fullGetSegmentText(context, i))
+                    }
+                }.trim()
+
+            TranscriptionResult(text = text, language = language)
+        }
 
     actual fun close() {
         context.close()
@@ -56,8 +55,9 @@ actual class SpeechRecognizer private constructor(
             val whisper = WhisperJNI()
             WhisperJNI.loadLibrary()
             WhisperJNI.setLibraryLogger(null)
-            val context = whisper.init(modelPath)
-                ?: error("Não foi possível carregar o modelo Whisper em $modelPath")
+            val context =
+                whisper.init(modelPath)
+                    ?: error("Não foi possível carregar o modelo Whisper em $modelPath")
             return SpeechRecognizer(whisper, context)
         }
     }

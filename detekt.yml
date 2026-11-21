@@ -1,0 +1,65 @@
+## Configuração do detekt para o Nox.
+## Inspirada no detekt.yml do projeto Recorda, começando com os gates de
+## complexidade e estilo ativos; a documentação obrigatória de API pública
+## (comments.*) fica desligada por ora e pode ser ligada progressivamente.
+
+complexity:
+  LongMethod:
+    threshold: 60
+    # Composables descrevem árvores de UI e naturalmente ficam longos.
+    ignoreAnnotated: ['Composable']
+  LongParameterList:
+    functionThreshold: 7
+    constructorThreshold: 9
+    # Composables com muitos callbacks (onClick, onChange...) são idiomáticos.
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    threshold: 20
+  TooManyFunctions:
+    thresholdInClasses: 20
+    thresholdInFiles: 25
+    # ViewModels e telas naturalmente concentram muitos handlers.
+    ignoreAnnotatedFunctions: ['Composable']
+
+style:
+  MagicNumber:
+    active: false
+  WildcardImport:
+    active: true
+  UnusedPrivateMember:
+    active: true
+  ReturnCount:
+    max: 5
+  MaxLineLength:
+    maxLineLength: 120
+    excludeCommentStatements: true
+
+exceptions:
+  # O Nox captura Throwable de propósito em várias fronteiras (rede, MCP, voz,
+  # persistência) para falhar de forma suave sem derrubar o chat. Esses catches
+  # são intencionais e documentados em KDoc/comentários.
+  TooGenericExceptionCaught:
+    active: false
+  SwallowedException:
+    active: false
+  TooGenericExceptionThrown:
+    active: false
+
+naming:
+  FunctionNaming:
+    # Permite backticks em nomes de teste e isenta @Composable (PascalCase).
+    functionPattern: '[a-zA-Z][a-zA-Z0-9`_]*'
+    ignoreAnnotated:
+      - 'Composable'
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+
+comments:
+  # Documentação obrigatória de API pública: ligar progressivamente no futuro
+  # (o código atual ainda tem muitos símbolos públicos sem KDoc).
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+  UndocumentedPublicProperty:
+    active: false

@@ -2,17 +2,17 @@ package com.sam.nox.ui.orb
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.State
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -44,14 +44,15 @@ private data class Particle(val radius: Float, val periodMs: Int, val dir: Int, 
 
 // Raio em fração do size (derivado do inset -28% do container + inset próprio
 // de cada .orb-p no CSS), período (ms), sentido, fase (0..1) e tamanho do ponto.
-private val PARTICLES = listOf(
-    Particle(0.749f, 14000, +1, 0.00f, 0.022f),
-    Particle(0.640f, 19000, -1, 0.68f, 0.016f),
-    Particle(0.811f, 23000, +1, 0.48f, 0.022f),
-    Particle(0.562f, 12000, -1, 0.25f, 0.014f),
-    Particle(0.702f, 27000, +1, 0.63f, 0.018f),
-    Particle(0.874f, 17000, -1, 0.53f, 0.022f),
-)
+private val PARTICLES =
+    listOf(
+        Particle(0.749f, 14000, +1, 0.00f, 0.022f),
+        Particle(0.640f, 19000, -1, 0.68f, 0.016f),
+        Particle(0.811f, 23000, +1, 0.48f, 0.022f),
+        Particle(0.562f, 12000, -1, 0.25f, 0.014f),
+        Particle(0.702f, 27000, +1, 0.63f, 0.018f),
+        Particle(0.874f, 17000, -1, 0.53f, 0.022f),
+    )
 
 /**
  * Rosto da Nox: orbe animado que reage ao [mood] (design v2, OrbStates.dc.html).
@@ -91,34 +92,76 @@ fun NoxOrb(
 
     val t = rememberInfiniteTransition(label = "orb")
 
-    val float by t.loop(6000, "float", reverse = true)          // flutuação vertical
-    val pool by t.loop(6000, "pool", reverse = true)            // reflexo
+    val float by t.loop(6000, "float", reverse = true) // flutuação vertical
+    val pool by t.loop(6000, "pool", reverse = true) // reflexo
     val glowPulse by t.loop(spec.bodyMillis.coerceAtLeast(2000), "glow", reverse = true)
     val body by t.loop(spec.bodyMillis, "body", reverse = true) // respiração/pulso
     val swirl by t.loop(spec.swirlMillis, "swirl")
     val ticks by t.loop(spec.ticksMillis, "ticks")
-    val orbit by t.loop(1800, "orbit")                          // satélite
+    val orbit by t.loop(1800, "orbit") // satélite
     val ring by t.loop(if (mood == NoxMood.Speaking) 1200 else 2200, "ring")
-    val blobA by t.loop(if (mood == NoxMood.Thinking) 4000 else if (mood == NoxMood.Speaking) 3000 else 9000, "blobA")
+    val blobA by t.loop(
+        if (mood == NoxMood.Thinking) {
+            4000
+        } else if (mood == NoxMood.Speaking) {
+            3000
+        } else {
+            9000
+        },
+        "blobA",
+    )
     val blobB by t.loop(if (mood == NoxMood.Speaking) 3000 else 12000, "blobB")
-    val cycle by t.loop(5000, "cycle")                          // piscar / glance
-    val particleSpin by t.loop(16000, "pSpin")                  // giro base do grupo de partículas
+    val cycle by t.loop(5000, "cycle") // piscar / glance
+    val particleSpin by t.loop(16000, "pSpin") // giro base do grupo de partículas
     val twinkle by t.loop(2600, "twinkle")
-    val mouthT by t.loop(if (mood == NoxMood.Speaking) 1400 else if (mood == NoxMood.Listening) 2200 else 3000, "mouth")
-    val errorT by t.loop(2400, "errorT")                        // tremida + glitch + flicker
-    val haloRot by t.loop(16000, "haloRot")                     // rotação base do halo
+    val mouthT by t.loop(
+        if (mood == NoxMood.Speaking) {
+            1400
+        } else if (mood == NoxMood.Listening) {
+            2200
+        } else {
+            3000
+        },
+        "mouth",
+    )
+    val errorT by t.loop(2400, "errorT") // tremida + glitch + flicker
+    val haloRot by t.loop(16000, "haloRot") // rotação base do halo
     val haloVoice by t.loop(if (mood == NoxMood.Speaking) 1600 else 2200, "haloVoice") // pulso tipo voz
-    val haloNode by t.loop(2600, "haloNode")                    // nó de luz correndo (Thinking)
+    val haloNode by t.loop(2600, "haloNode") // nó de luz correndo (Thinking)
 
     Canvas(
-        spec = spec, c1 = c1, c2 = c2, c3 = c3,
-        eyeHeight = eyeHeight, eyeWidth = eyeWidth, glowAlphaBase = glowAlphaBase,
-        ticksAlpha = ticksAlpha, particleScale = particleScale, particleAlpha = particleAlpha,
-        poke = poke, mood = mood, look = look, compact = compact,
-        float = float, pool = pool, glowPulse = glowPulse, body = body, swirl = swirl,
-        ticks = ticks, orbit = orbit, ring = ring, blobA = blobA, blobB = blobB,
-        cycle = cycle, particleSpin = particleSpin, twinkle = twinkle, mouthT = mouthT,
-        errorT = errorT, haloRot = haloRot, haloVoice = haloVoice, haloNode = haloNode,
+        spec = spec,
+        c1 = c1,
+        c2 = c2,
+        c3 = c3,
+        eyeHeight = eyeHeight,
+        eyeWidth = eyeWidth,
+        glowAlphaBase = glowAlphaBase,
+        ticksAlpha = ticksAlpha,
+        particleScale = particleScale,
+        particleAlpha = particleAlpha,
+        poke = poke,
+        mood = mood,
+        look = look,
+        compact = compact,
+        float = float,
+        pool = pool,
+        glowPulse = glowPulse,
+        body = body,
+        swirl = swirl,
+        ticks = ticks,
+        orbit = orbit,
+        ring = ring,
+        blobA = blobA,
+        blobB = blobB,
+        cycle = cycle,
+        particleSpin = particleSpin,
+        twinkle = twinkle,
+        mouthT = mouthT,
+        errorT = errorT,
+        haloRot = haloRot,
+        haloVoice = haloVoice,
+        haloNode = haloNode,
         modifier = modifier.size(size),
     )
 }
@@ -126,14 +169,38 @@ fun NoxOrb(
 /** Wrapper em torno do Canvas, só para manter a chamada acima legível. */
 @Composable
 private fun Canvas(
-    spec: MoodSpec, c1: Color, c2: Color, c3: Color,
-    eyeHeight: Float, eyeWidth: Float, glowAlphaBase: Float,
-    ticksAlpha: Float, particleScale: Float, particleAlpha: Float,
-    poke: Float, mood: NoxMood, look: Offset, compact: Boolean,
-    float: Float, pool: Float, glowPulse: Float, body: Float, swirl: Float,
-    ticks: Float, orbit: Float, ring: Float, blobA: Float, blobB: Float,
-    cycle: Float, particleSpin: Float, twinkle: Float, mouthT: Float, errorT: Float,
-    haloRot: Float, haloVoice: Float, haloNode: Float,
+    spec: MoodSpec,
+    c1: Color,
+    c2: Color,
+    c3: Color,
+    eyeHeight: Float,
+    eyeWidth: Float,
+    glowAlphaBase: Float,
+    ticksAlpha: Float,
+    particleScale: Float,
+    particleAlpha: Float,
+    poke: Float,
+    mood: NoxMood,
+    look: Offset,
+    compact: Boolean,
+    float: Float,
+    pool: Float,
+    glowPulse: Float,
+    body: Float,
+    swirl: Float,
+    ticks: Float,
+    orbit: Float,
+    ring: Float,
+    blobA: Float,
+    blobB: Float,
+    cycle: Float,
+    particleSpin: Float,
+    twinkle: Float,
+    mouthT: Float,
+    errorT: Float,
+    haloRot: Float,
+    haloVoice: Float,
+    haloNode: Float,
     modifier: Modifier,
 ) {
     androidx.compose.foundation.Canvas(modifier) {
@@ -157,8 +224,12 @@ private fun Canvas(
         val partLean = Offset(lookPx.x * 1.3f, lookPx.y * 1.3f)
 
         // --- Glow externo ---
-        val glowAlpha = if (mood == NoxMood.Error) glowAlphaBase
-        else glowAlphaBase * (0.9f + 0.1f * glowPulse) + poke * (1f - glowAlphaBase)
+        val glowAlpha =
+            if (mood == NoxMood.Error) {
+                glowAlphaBase
+            } else {
+                glowAlphaBase * (0.9f + 0.1f * glowPulse) + poke * (1f - glowAlphaBase)
+            }
         drawGlow(center + groupOffset + glowLean, s, c1, glowAlpha)
 
         if (!compact) {
@@ -184,29 +255,60 @@ private fun Canvas(
                 drawHalo(center + groupOffset, s, c1, spec.haloMode, spec.haloIntensity, haloRot, haloVoice, haloNode)
             }
             // --- Partículas (seguem o cursor com parallax de primeiro plano) ---
-            drawParticles(center + groupOffset + partLean, s, c1, particleScale * (1f + poke * 0.3f), particleAlpha, particleSpin, twinkle, mood)
+            drawParticles(
+                center + groupOffset + partLean,
+                s,
+                c1,
+                particleScale * (1f + poke * 0.3f),
+                particleAlpha,
+                particleSpin,
+                twinkle,
+                mood,
+            )
         }
 
         // --- Corpo (respiração/pulso + squash do poke) ---
-        val breathe = when (mood) {
-            NoxMood.Speaking -> 1f + body * 0.05f
-            else -> 1f + body * 0.035f
-        }
+        val breathe =
+            when (mood) {
+                NoxMood.Speaking -> 1f + body * 0.05f
+                else -> 1f + body * 0.035f
+            }
         val sx = breathe * (1f + poke * squashX(poke))
         val sy = breathe * (1f + poke * squashY(poke))
         drawBody(
-            center = center + groupOffset, s = s, bodyScaleX = sx, bodyScaleY = sy,
-            c1 = c1, c2 = c2, c3 = c3, swirlAngle = swirl * 360f, swirlAlpha = spec.swirlAlpha,
-            blobA = blobA, blobB = blobB, look = lookPx, mood = mood, errorT = errorT, compact = compact,
+            center = center + groupOffset,
+            s = s,
+            bodyScaleX = sx,
+            bodyScaleY = sy,
+            c1 = c1,
+            c2 = c2,
+            c3 = c3,
+            swirlAngle = swirl * 360f,
+            swirlAlpha = spec.swirlAlpha,
+            blobA = blobA,
+            blobB = blobB,
+            look = lookPx,
+            mood = mood,
+            errorT = errorT,
+            compact = compact,
         )
 
         if (compact) return@Canvas
 
         // --- Rosto ---
         drawFace(
-            center = center + groupOffset + lookPx, s = s,
-            eyeHeight = eyeHeight, eyeWidth = eyeWidth, mood = mood, spec = spec,
-            cycle = cycle, mouthT = mouthT, errorT = errorT, poke = poke, c1 = c1, c3 = c3,
+            center = center + groupOffset + lookPx,
+            s = s,
+            eyeHeight = eyeHeight,
+            eyeWidth = eyeWidth,
+            mood = mood,
+            spec = spec,
+            cycle = cycle,
+            mouthT = mouthT,
+            errorT = errorT,
+            poke = poke,
+            c1 = c1,
+            c3 = c3,
         )
 
         // --- Faíscas do poke (por cima de tudo): onda de choque + estrelinhas ---
@@ -226,9 +328,11 @@ private fun DrawScope.drawPool(center: Offset, s: Float, c1: Color, pool: Float,
     val cx = center.x
     val cy = center.y + s * 0.57f
     drawOval(
-        brush = Brush.radialGradient(
+        brush =
+        Brush.radialGradient(
             listOf(c1.copy(alpha = alpha), Color.Transparent),
-            center = Offset(cx, cy), radius = w / 2f,
+            center = Offset(cx, cy),
+            radius = w / 2f,
         ),
         topLeft = Offset(cx - w / 2f, cy - h / 2f),
         size = Size(w, h),
@@ -239,7 +343,8 @@ private fun DrawScope.drawGlow(center: Offset, s: Float, c1: Color, alpha: Float
     val r = s * 0.85f
     drawCircle(
         brush = Brush.radialGradient(listOf(c1.copy(alpha = alpha.coerceIn(0f, 1f)), Color.Transparent), center, r),
-        radius = r, center = center,
+        radius = r,
+        center = center,
     )
 }
 
@@ -265,7 +370,8 @@ private fun DrawScope.drawWaveRing(center: Offset, s: Float, c1: Color, prog: Fl
     if (alpha <= 0f) return
     drawCircle(
         color = c1.copy(alpha = alpha),
-        radius = s / 2f * scale, center = center,
+        radius = s / 2f * scale,
+        center = center,
         style = Stroke(width = stroke.dp.toPx()),
     )
 }
@@ -276,7 +382,8 @@ private fun DrawScope.drawSatellite(center: Offset, s: Float, c1: Color, orbit: 
     // rastro: arco de 120° atrás do satélite
     val sweep = 120f
     drawArc(
-        brush = Brush.sweepGradient(
+        brush =
+        Brush.sweepGradient(
             0f to Color.Transparent,
             0.9f to Color.Transparent,
             1f to c1.copy(alpha = 0.8f),
@@ -301,22 +408,34 @@ private fun DrawScope.drawSatellite(center: Offset, s: Float, c1: Color, orbit: 
  * - [mode] 2: giroscópio 3D (anéis inclinados em perspetiva) com um nó de luz correndo.
  */
 private fun DrawScope.drawHalo(
-    center: Offset, s: Float, c1: Color, mode: Int, intensity: Float,
-    rot: Float, voice: Float, node: Float,
+    center: Offset,
+    s: Float,
+    c1: Color,
+    mode: Int,
+    intensity: Float,
+    rot: Float,
+    voice: Float,
+    node: Float,
 ) {
     // 3 anéis com raios/opacidades/velocidades diferentes.
-    val rings = listOf(
-        Triple(0.59f, 0.55f, 1f),   // inset -9%  → r≈0.59·s
-        Triple(0.64f, 0.38f, 1.6f), // inset -14%
-        Triple(0.69f, 0.22f, 2.2f), // inset -19%
-    )
+    val rings =
+        listOf(
+            Triple(0.59f, 0.55f, 1f), // inset -9%  → r≈0.59·s
+            Triple(0.64f, 0.38f, 1.6f), // inset -14%
+            Triple(0.69f, 0.22f, 2.2f), // inset -19%
+        )
     rings.forEachIndexed { i, (baseR, baseOp, k) ->
         val op = (baseOp * intensity).coerceIn(0f, 1f)
         val stroke = s * (0.008f - i * 0.0015f)
         if (mode == 2) {
             // Giroscópio: cada anel é uma elipse achatada num eixo, inclinação distinta.
             val rr = (baseR + 0.03f) * s
-            val tilt = when (i) { 0 -> 0.52f; 1 -> 0.52f; else -> 0.6f } // achatamento vertical
+            val tilt =
+                when (i) {
+                    0 -> 0.52f
+                    1 -> 0.52f
+                    else -> 0.6f
+                } // achatamento vertical
             val angle = (rot * 360f * (if (i == 1) -1f else 1f) * (1f + i * 0.2f))
             rotate(angle + i * 40f, pivot = center) {
                 drawOval(
@@ -328,10 +447,11 @@ private fun DrawScope.drawHalo(
             }
             // Nó de luz correndo pelo anel.
             val na = frac(node + i * 0.33f) * TWO_PI
-            val np = Offset(
-                center.x + cos(na) * rr,
-                center.y + sin(na) * rr * tilt,
-            )
+            val np =
+                Offset(
+                    center.x + cos(na) * rr,
+                    center.y + sin(na) * rr * tilt,
+                )
             rotate(angle + i * 40f, pivot = center) {
                 drawCircle(Color.White, radius = s * 0.02f, center = np)
                 drawCircle(c1.copy(alpha = 0.7f), radius = s * 0.035f, center = np)
@@ -376,7 +496,8 @@ private fun DrawScope.drawPokeSparks(center: Offset, s: Float, c1: Color, poke: 
         val color = lerpColor(Color.White, c1, shockT)
         drawCircle(
             color = color.copy(alpha = alpha),
-            radius = s * 0.5f * scale, center = center,
+            radius = s * 0.5f * scale,
+            center = center,
             style = Stroke(width = s * 0.012f),
         )
     }
@@ -403,8 +524,14 @@ private fun lerpColor(a: Color, b: Color, t: Float): Color = Color(
 )
 
 private fun DrawScope.drawParticles(
-    center: Offset, s: Float, c1: Color, groupScale: Float, groupAlpha: Float,
-    spin: Float, twinkle: Float, mood: NoxMood,
+    center: Offset,
+    s: Float,
+    c1: Color,
+    groupScale: Float,
+    groupAlpha: Float,
+    spin: Float,
+    twinkle: Float,
+    mood: NoxMood,
 ) {
     val fall = if (mood == NoxMood.Error) s * 0.1f else 0f
     val groupSpin = if (mood == NoxMood.Thinking) spin * TWO_PI * 4f else 0f // grupo gira em 4s
@@ -426,9 +553,21 @@ private fun DrawScope.drawParticles(
 }
 
 private fun DrawScope.drawBody(
-    center: Offset, s: Float, bodyScaleX: Float, bodyScaleY: Float,
-    c1: Color, c2: Color, c3: Color, swirlAngle: Float, swirlAlpha: Float,
-    blobA: Float, blobB: Float, look: Offset, mood: NoxMood, errorT: Float, compact: Boolean,
+    center: Offset,
+    s: Float,
+    bodyScaleX: Float,
+    bodyScaleY: Float,
+    c1: Color,
+    c2: Color,
+    c3: Color,
+    swirlAngle: Float,
+    swirlAlpha: Float,
+    blobA: Float,
+    blobB: Float,
+    look: Offset,
+    mood: NoxMood,
+    errorT: Float,
+    compact: Boolean,
 ) {
     val rx = s / 2f * bodyScaleX
     val ry = s / 2f * bodyScaleY
@@ -438,26 +577,31 @@ private fun DrawScope.drawBody(
     val flicker = if (mood == NoxMood.Error) errorFlicker(errorT) else 1f
 
     // Recorta tudo ao círculo do corpo.
-    val clip = Path().apply {
-        addOval(Rect(center.x - rx, center.y - ry, center.x + rx, center.y + ry))
-    }
+    val clip =
+        Path().apply {
+            addOval(Rect(center.x - rx, center.y - ry, center.x + rx, center.y + ry))
+        }
     clipPath(clip) {
         // Núcleo
         val coreCenter = center + Offset(-r * 0.16f, -r * 0.22f)
         drawCircle(
-            brush = Brush.radialGradient(
+            brush =
+            Brush.radialGradient(
                 0f to lerpWhite(c1, flicker, 0.9f),
                 0.20f to scaleBright(c1, flicker),
                 0.58f to scaleBright(c2, flicker),
                 1f to c3,
-                center = coreCenter, radius = r * 1.25f,
+                center = coreCenter,
+                radius = r * 1.25f,
             ),
-            radius = r, center = center,
+            radius = r,
+            center = center,
         )
         // Redemoinho (swirl)
         rotate(swirlAngle, pivot = center) {
             drawCircle(
-                brush = Brush.sweepGradient(
+                brush =
+                Brush.sweepGradient(
                     0f to Color.Transparent,
                     70f / 360f to c1.copy(alpha = swirlAlpha),
                     150f / 360f to Color.Transparent,
@@ -466,17 +610,32 @@ private fun DrawScope.drawBody(
                     1f to Color.Transparent,
                     center = center,
                 ),
-                radius = r, center = center, blendMode = BlendMode.Screen,
+                radius = r,
+                center = center,
+                blendMode = BlendMode.Screen,
             )
         }
         // Plasma A
-        drawBlob(center, r, blobA, radial = listOf(c1.copy(alpha = 0.75f), Color.Transparent),
-            path = listOf(Offset(-0.18f, -0.10f) to 1f, Offset(0.20f, 0.08f) to 1.15f, Offset(-0.04f, 0.22f) to 0.9f))
+        drawBlob(
+            center,
+            r,
+            blobA,
+            radial = listOf(c1.copy(alpha = 0.75f), Color.Transparent),
+            path = listOf(Offset(-0.18f, -0.10f) to 1f, Offset(0.20f, 0.08f) to 1.15f, Offset(-0.04f, 0.22f) to 0.9f),
+        )
         if (!compact) {
             // Plasma B
-            drawBlob(center, r, blobB,
+            drawBlob(
+                center,
+                r,
+                blobB,
                 radial = listOf(Color.White.copy(alpha = 0.45f), c2.copy(alpha = 0.45f), Color.Transparent),
-                path = listOf(Offset(0.16f, 0.14f) to 1f, Offset(-0.20f, 0.04f) to 0.85f, Offset(0.08f, -0.22f) to 1.2f))
+                path = listOf(
+                    Offset(0.16f, 0.14f) to 1f,
+                    Offset(-0.20f, 0.04f) to 0.85f,
+                    Offset(0.08f, -0.22f) to 1.2f,
+                ),
+            )
         }
         // Glitch (Error)
         if (mood == NoxMood.Error) {
@@ -484,21 +643,28 @@ private fun DrawScope.drawBody(
             if (g > 0f) {
                 val gc = Offset(center.x + r * 0.24f - r * 0.06f, center.y - r * 0.16f)
                 drawCircle(
-                    brush = Brush.radialGradient(
+                    brush =
+                    Brush.radialGradient(
                         listOf(Color(0xFF5CE1E6).copy(alpha = 0.6f * g), Color.Transparent),
-                        center = gc, radius = r * 0.55f,
+                        center = gc,
+                        radius = r * 0.55f,
                     ),
-                    radius = r, center = center, blendMode = BlendMode.Screen,
+                    radius = r,
+                    center = center,
+                    blendMode = BlendMode.Screen,
                 )
             }
         }
         // Sombra interna embaixo
         drawCircle(
-            brush = Brush.verticalGradient(
+            brush =
+            Brush.verticalGradient(
                 listOf(Color.Transparent, Color.Black.copy(alpha = 0.35f)),
-                startY = center.y, endY = center.y + ry,
+                startY = center.y,
+                endY = center.y + ry,
             ),
-            radius = r, center = center,
+            radius = r,
+            center = center,
         )
     }
 
@@ -507,22 +673,31 @@ private fun DrawScope.drawBody(
     drawCircle(Color.White.copy(alpha = 0.18f), radius = r - 1f, center = center, style = Stroke(width = 1.dp.toPx()))
 
     // Sheen (paralaxe inversa ao olhar)
-    val sheenCenter = Offset(
-        center.x - r * 0.44f - look.x * 0.6f,
-        center.y - r * 0.62f - look.y * 0.6f,
-    )
+    val sheenCenter =
+        Offset(
+            center.x - r * 0.44f - look.x * 0.6f,
+            center.y - r * 0.62f - look.y * 0.6f,
+        )
     val sheenRx = s * 0.18f
     val sheenRy = s * 0.10f
     drawOval(
-        brush = Brush.radialGradient(listOf(Color.White.copy(alpha = 0.65f), Color.Transparent),
-            center = sheenCenter, radius = maxOf(sheenRx, sheenRy)),
+        brush =
+        Brush.radialGradient(
+            listOf(Color.White.copy(alpha = 0.65f), Color.Transparent),
+            center = sheenCenter,
+            radius = maxOf(sheenRx, sheenRy),
+        ),
         topLeft = Offset(sheenCenter.x - sheenRx, sheenCenter.y - sheenRy),
         size = Size(sheenRx * 2f, sheenRy * 2f),
     )
 }
 
 private fun DrawScope.drawBlob(
-    center: Offset, r: Float, prog: Float, radial: List<Color>, path: List<Pair<Offset, Float>>,
+    center: Offset,
+    r: Float,
+    prog: Float,
+    radial: List<Color>,
+    path: List<Pair<Offset, Float>>,
 ) {
     // Interpola a posição/escala entre 3 keyframes (0→33→66→volta).
     val (off, scale) = sample3(path, prog)
@@ -530,7 +705,9 @@ private fun DrawScope.drawBlob(
     val br = r * 0.7f * scale
     drawCircle(
         brush = Brush.radialGradient(radial, center = bc, radius = br),
-        radius = br, center = bc, blendMode = BlendMode.Screen,
+        radius = br,
+        center = bc,
+        blendMode = BlendMode.Screen,
     )
 }
 
@@ -539,16 +716,27 @@ private fun DrawScope.drawBlob(
 // ----------------------------------------------------------------------------
 
 private fun DrawScope.drawFace(
-    center: Offset, s: Float, eyeHeight: Float, eyeWidth: Float, mood: NoxMood, spec: MoodSpec,
-    cycle: Float, mouthT: Float, errorT: Float, poke: Float, c1: Color, c3: Color,
+    center: Offset,
+    s: Float,
+    eyeHeight: Float,
+    eyeWidth: Float,
+    mood: NoxMood,
+    spec: MoodSpec,
+    cycle: Float,
+    mouthT: Float,
+    errorT: Float,
+    poke: Float,
+    c1: Color,
+    c3: Color,
 ) {
     // Deslocamento do olhar interno (glance/ponder) por estado.
-    val eyeOffset = when {
-        poke > 0.01f -> Offset.Zero
-        mood == NoxMood.Idle -> glance(cycle) * s
-        mood == NoxMood.Thinking -> ponder(frac(mouthT)) * s // mesmo ritmo (3s) da boca "hmm"
-        else -> Offset.Zero
-    }
+    val eyeOffset =
+        when {
+            poke > 0.01f -> Offset.Zero
+            mood == NoxMood.Idle -> glance(cycle) * s
+            mood == NoxMood.Thinking -> ponder(frac(mouthT)) * s // mesmo ritmo (3s) da boca "hmm"
+            else -> Offset.Zero
+        }
     // Piscar duplo (Idle/Thinking seguem o ciclo; outros não piscam).
     val blink = if ((mood == NoxMood.Idle) && poke < 0.01f) doubleBlink(cycle) else 1f
     val eyeH = if (poke > 0.01f) s * 0.035f else s * eyeHeight * blink
@@ -574,9 +762,13 @@ private fun DrawScope.eye(center: Offset, w: Float, h: Float, glints: Boolean) {
     val radius = minOf(w, h) / 2f
     val topLeft = Offset(center.x - w / 2f, center.y - h / 2f)
     drawRoundRect(
-        brush = Brush.verticalGradient(
-            0f to EYE_TOP, 0.6f to EYE_INK, 1f to EYE_INK,
-            startY = topLeft.y, endY = topLeft.y + h,
+        brush =
+        Brush.verticalGradient(
+            0f to EYE_TOP,
+            0.6f to EYE_INK,
+            1f to EYE_INK,
+            startY = topLeft.y,
+            endY = topLeft.y + h,
         ),
         topLeft = topLeft,
         size = Size(w, h),
@@ -599,12 +791,19 @@ private fun DrawScope.eye(center: Offset, w: Float, h: Float, glints: Boolean) {
 }
 
 private fun DrawScope.drawMouth(
-    kind: MouthKind, center: Offset, s: Float, mouthT: Float, errorT: Float, c1: Color, c3: Color,
+    kind: MouthKind,
+    center: Offset,
+    s: Float,
+    mouthT: Float,
+    errorT: Float,
+    c1: Color,
+    c3: Color,
 ) {
     when (kind) {
         MouthKind.Smile -> {
             // arco inferior (sorriso leve): borda de baixo de um retângulo arredondado.
-            val w = s * 0.13f; val h = s * 0.05f
+            val w = s * 0.13f
+            val h = s * 0.05f
             arcBottom(center, w, h, s * 0.016f, EYE_INK)
         }
         MouthKind.O -> {
@@ -616,7 +815,8 @@ private fun DrawScope.drawMouth(
         MouthKind.Hmm -> {
             // "hmm" de lado: traço fino que desliza e inclina (nox-hmm: 3 keyframes).
             val (shiftFrac, tilt) = hmmPose(frac(mouthT))
-            val w = s * 0.07f; val h = s * 0.022f
+            val w = s * 0.07f
+            val h = s * 0.022f
             val mc = Offset(center.x + shiftFrac * s, center.y)
             rotate(tilt, pivot = mc) {
                 pill(mc, w, h, EYE_INK)
@@ -639,20 +839,26 @@ private fun DrawScope.drawMouth(
                 style = Stroke(width = s * 0.013f),
             )
             // língua (elipse c1 na parte de baixo).
-            val tw = mw * 0.56f; val th = mh * 0.42f
+            val tw = mw * 0.56f
+            val th = mh * 0.42f
             val tc = Offset(center.x, center.y + mh * 0.5f - th * 0.7f)
-            drawOval(c1.copy(alpha = 0.85f),
-                topLeft = Offset(tc.x - tw / 2f, tc.y - th / 2f), size = Size(tw, th))
+            drawOval(
+                c1.copy(alpha = 0.85f),
+                topLeft = Offset(tc.x - tw / 2f, tc.y - th / 2f),
+                size = Size(tw, th),
+            )
         }
         MouthKind.Sad -> {
             // arco superior (triste) balançando.
-            val w = s * 0.12f; val h = s * 0.045f
+            val w = s * 0.12f
+            val h = s * 0.045f
             val wob = (tri(frac(errorT)) - 0.5f) * 2f // leve
             arcTop(Offset(center.x, center.y + s * 0.015f), w, h, s * 0.016f, EYE_INK, wob * 0.1f)
         }
         MouthKind.Poke -> {
             // sorrisão aberto "D".
-            val w = s * 0.18f; val h = s * 0.085f
+            val w = s * 0.18f
+            val h = s * 0.085f
             drawRoundRect(
                 color = c3,
                 topLeft = Offset(center.x - w / 2f, center.y - h / 2f),
@@ -666,10 +872,14 @@ private fun DrawScope.drawMouth(
                 cornerRadius = CornerRadius(w * 0.12f, h * 0.5f),
                 style = Stroke(width = s * 0.013f),
             )
-            val tw = w * 0.56f; val th = h * 0.42f
+            val tw = w * 0.56f
+            val th = h * 0.42f
             val tc = Offset(center.x, center.y + h * 0.5f - th * 0.7f)
-            drawOval(c1.copy(alpha = 0.85f),
-                topLeft = Offset(tc.x - tw / 2f, tc.y - th / 2f), size = Size(tw, th))
+            drawOval(
+                c1.copy(alpha = 0.85f),
+                topLeft = Offset(tc.x - tw / 2f, tc.y - th / 2f),
+                size = Size(tw, th),
+            )
         }
     }
 }
@@ -690,38 +900,44 @@ private fun DrawScope.pill(center: Offset, w: Float, h: Float, color: Color) {
 
 /** Borda inferior de um retângulo arredondado (sorriso). */
 private fun DrawScope.arcBottom(center: Offset, w: Float, h: Float, stroke: Float, color: Color) {
-    val path = Path().apply {
-        moveTo(center.x - w / 2f, center.y - h * 0.1f)
-        quadraticBezierTo(center.x, center.y + h, center.x + w / 2f, center.y - h * 0.1f)
-    }
+    val path =
+        Path().apply {
+            moveTo(center.x - w / 2f, center.y - h * 0.1f)
+            quadraticBezierTo(center.x, center.y + h, center.x + w / 2f, center.y - h * 0.1f)
+        }
     drawPath(path, color, style = Stroke(width = stroke))
 }
 
 /** Arco superior (boca triste), com leve rotação. */
 private fun DrawScope.arcTop(center: Offset, w: Float, h: Float, stroke: Float, color: Color, tilt: Float) {
     rotate(tilt * 7f, pivot = center) {
-        val path = Path().apply {
-            moveTo(center.x - w / 2f, center.y + h * 0.1f)
-            quadraticBezierTo(center.x, center.y - h, center.x + w / 2f, center.y + h * 0.1f)
-        }
+        val path =
+            Path().apply {
+                moveTo(center.x - w / 2f, center.y + h * 0.1f)
+                quadraticBezierTo(center.x, center.y - h, center.x + w / 2f, center.y + h * 0.1f)
+            }
         drawPath(path, color, style = Stroke(width = stroke))
     }
 }
 
 private fun frac(v: Float): Float = v - kotlin.math.floor(v)
+
 /** Onda triangular 0→1→0 para t em [0,1). */
 private fun tri(t: Float): Float = 1f - abs(t - 0.5f) * 2f
 
 /** Posição/escala interpolada entre 3 keyframes (vai e volta ao primeiro). */
 private fun sample3(path: List<Pair<Offset, Float>>, prog: Float): Pair<Offset, Float> {
     // 0→0.33 (a→b), 0.33→0.66 (b→c), 0.66→1 (c→a)
-    val (a, sa) = path[0]; val (b, sb) = path[1]; val (c, sc) = path[2]
+    val (a, sa) = path[0]
+    val (b, sb) = path[1]
+    val (c, sc) = path[2]
     return when {
         prog < 0.33f -> lerpOS(a, sa, b, sb, prog / 0.33f)
         prog < 0.66f -> lerpOS(b, sb, c, sc, (prog - 0.33f) / 0.33f)
         else -> lerpOS(c, sc, a, sa, (prog - 0.66f) / 0.34f)
     }
 }
+
 private fun lerpOS(a: Offset, sa: Float, b: Offset, sb: Float, t: Float): Pair<Offset, Float> =
     Offset(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t) to (sa + (sb - sa) * t)
 
@@ -739,7 +955,9 @@ private fun glance(cycle: Float): Offset {
 /** Ponder (Thinking): olhar vaga para cima, interpolado (nox-ponder, 3s). */
 private fun ponder(cycle: Float): Offset {
     // keyframes: 0% (.05,-.07) → 33% (-.05,-.07) → 66% (.01,-.03) → volta
-    val a = Offset(0.05f, -0.07f); val b = Offset(-0.05f, -0.07f); val c = Offset(0.01f, -0.03f)
+    val a = Offset(0.05f, -0.07f)
+    val b = Offset(-0.05f, -0.07f)
+    val c = Offset(0.01f, -0.03f)
     return when {
         cycle < 0.33f -> lerpOffset(a, b, smooth(cycle / 0.33f))
         cycle < 0.66f -> lerpOffset(b, c, smooth((cycle - 0.33f) / 0.33f))
@@ -750,9 +968,12 @@ private fun ponder(cycle: Float): Offset {
 /** Pose da boca "hmm": desliza e inclina, interpolado (nox-hmm, 3s). */
 private fun hmmPose(t: Float): Pair<Float, Float> {
     // keyframes: 0% (.04,-8°) → 33% (-.03,6°) → 66% (.01,-3°) → volta
-    val sa = 0.04f; val ra = -8f
-    val sb = -0.03f; val rb = 6f
-    val sc = 0.01f; val rc = -3f
+    val sa = 0.04f
+    val ra = -8f
+    val sb = -0.03f
+    val rb = 6f
+    val sc = 0.01f
+    val rc = -3f
     return when {
         t < 0.33f -> lerp2(sa, ra, sb, rb, smooth(t / 0.33f))
         t < 0.66f -> lerp2(sb, rb, sc, rc, smooth((t - 0.33f) / 0.33f))
@@ -763,8 +984,7 @@ private fun hmmPose(t: Float): Pair<Float, Float> {
 private fun lerp2(a1: Float, a2: Float, b1: Float, b2: Float, k: Float): Pair<Float, Float> =
     (a1 + (b1 - a1) * k) to (a2 + (b2 - a2) * k)
 
-private fun lerpOffset(a: Offset, b: Offset, k: Float): Offset =
-    Offset(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k)
+private fun lerpOffset(a: Offset, b: Offset, k: Float): Offset = Offset(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k)
 
 /** Ease in-out suave (como ease-in-out do CSS). */
 private fun smooth(t: Float): Float {
@@ -808,10 +1028,17 @@ private fun errorGlitch(t: Float): Float = when {
 
 /** Forma da boca falando (fonemas), interpolando a tabela de keyframes. */
 private fun speakShape(t: Float, s: Float): Pair<Float, Float> {
-    val kf = listOf(
-        0.10f to 0.05f, 0.14f to 0.09f, 0.08f to 0.075f, 0.165f to 0.045f,
-        0.11f to 0.105f, 0.15f to 0.06f, 0.07f to 0.055f, 0.13f to 0.085f,
-    )
+    val kf =
+        listOf(
+            0.10f to 0.05f,
+            0.14f to 0.09f,
+            0.08f to 0.075f,
+            0.165f to 0.045f,
+            0.11f to 0.105f,
+            0.15f to 0.06f,
+            0.07f to 0.055f,
+            0.13f to 0.085f,
+        )
     val n = kf.size
     val p = frac(t) * n
     val i = p.toInt() % n
@@ -829,6 +1056,7 @@ private fun squashX(poke: Float): Float = when {
     poke < 0.75f -> -0.08f + 0.12f * ((poke - 0.5f) / 0.25f)
     else -> 0.04f - 0.04f * ((poke - 0.75f) / 0.25f)
 }
+
 private fun squashY(poke: Float): Float = -squashX(poke)
 
 // Ajustes de brilho para o flicker do Error.
@@ -841,6 +1069,7 @@ private fun scaleBright(c: Color, k: Float): Color {
         alpha = c.alpha,
     )
 }
+
 private fun lerpWhite(c: Color, k: Float, baseAlpha: Float): Color =
     Color.White.copy(alpha = (baseAlpha * (if (k > 1f) 1f else k)).coerceIn(0f, 1f))
 
@@ -850,7 +1079,8 @@ private fun InfiniteTransition.loop(periodMs: Int, label: String, reverse: Boole
     animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
+        animationSpec =
+        infiniteRepeatable(
             animation = tween(periodMs, easing = if (reverse) FastOutSlowInEasing else LinearEasing),
             repeatMode = if (reverse) RepeatMode.Reverse else RepeatMode.Restart,
         ),

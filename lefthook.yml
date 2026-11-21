@@ -1,0 +1,22 @@
+# Git hooks (lefthook) do Nox — espelham os quality gates locais, inspirados no
+# projeto Recorda. Instale os hooks uma vez com: `lefthook install`.
+
+pre-commit:
+  parallel: true
+  commands:
+    ktlint:
+      run: ./gradlew ktlintCheck --daemon
+      fail_text: "Formatação incorreta. Rode './gradlew ktlintFormat' para corrigir automaticamente."
+    detekt:
+      run: ./gradlew detekt --daemon
+      fail_text: "detekt encontrou problemas. Veja o relatório em build/reports/detekt."
+    unit-tests:
+      run: ./gradlew :shared:jvmTest --daemon
+      fail_text: "Testes de unidade falharam. Veja o relatório em shared/build/reports/tests."
+
+pre-push:
+  parallel: false
+  commands:
+    build:
+      run: ./gradlew :desktopApp:compileKotlin --daemon
+      fail_text: "A compilação do desktopApp falhou. Corrija antes de dar push."
