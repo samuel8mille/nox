@@ -130,3 +130,22 @@ do projeto ou via `-Dnox.model`.
 - **Chaves** — sempre por variável de ambiente; nunca hardcoded nem commitadas.
 - **Ferramentas comuns vs. de plataforma** — ferramentas sem dependência de SO ficam no
   `shared/commonMain`; as que usam JVM (terminal, arquivos) ficam no `desktopApp`.
+
+---
+
+## Engenharia e qualidade (meta)
+
+O Nox adota como meta de engenharia as práticas maduras do projeto irmão **Recorda**, adaptadas à
+sua stack (Kotlin Multiplatform / Compose Desktop). Estas práticas estão especificadas em
+`openspec/specs/` como requisitos a atingir — algumas ainda não implementadas:
+
+| Dimensão | Spec | O que cobre |
+|---|---|---|
+| Arquitetura | `specs/arquitetura` | Modularização com dependências direcionadas, camadas, MVI, DI, base KMP |
+| Qualidade | `specs/qualidade` | ktlint, detekt, KDoc de API pública, git hooks (lefthook) |
+| Testes | `specs/testes` | Unidade + cobertura mínima, screenshot tests, E2E, benchmarks |
+| CI/CD | `specs/ci-cd` | Pipeline com pre-flight, quality gates paralelos, cobertura no PR, CD, CodeQL |
+| Observabilidade | `specs/observabilidade` | Logging estruturado, crash reporting, Swap Pattern, analytics, diagnóstico |
+
+Estado atual: o Nox tem testes de unidade incipientes e ainda **não** possui CI, hooks nem análise
+estática configurados — estes specs definem o alvo, não o presente.
