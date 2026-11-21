@@ -79,3 +79,13 @@ agendada periodicamente (ex.: semanal).
 #### Scenario: Varredura semanal
 - **WHEN** chega o horário agendado da varredura
 - **THEN** o CodeQL analisa o código e reporta alertas de segurança
+
+### Requirement: Análise de qualidade e segurança de dependências (meta)
+O projeto DEVERIA, como meta futura (já em uso no projeto irmão Recorda, ainda não implementado
+aqui), integrar: análise de qualidade contínua (SonarCloud), varredura de CVEs em dependências
+(OWASP dependency-check), e detecção de mudanças não intencionais no grafo de dependências
+(dependency-guard). A regressão visual (screenshot tests) está especificada em `specs/testes`.
+
+#### Scenario: Qualidade contínua
+- **WHEN** um pull request é aberto
+- **THEN** (meta) a análise SonarCloud reporta duplicação, code smells e cobertura no PR
