@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 dependencies {
@@ -14,6 +15,10 @@ dependencies {
     implementation(libs.kotlinx.coroutinesSwing)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serializationJson)
+
+    // Cliente HTTP (Ktor) usado pelo ElevenLabsSpeaker / McpClient no desktop.
+    implementation(libs.ktor.clientCore)
+    implementation(libs.ktor.clientOkHttp)
 
     implementation(libs.compose.uiToolingPreview)
 }
@@ -26,6 +31,26 @@ tasks.register<JavaExec>("runWhisperDemo") {
     mainClass.set("com.sam.nox.WhisperDemoKt")
     classpath = sourceSets["main"].runtimeClasspath
     standardInput = System.`in`
+}
+
+
+// Verifica a conexão MCP (lê ~/.nox/mcp.json, arranca servidores, lista ferramentas).
+// Uso: ./gradlew :desktopApp:runMcpSmoke
+tasks.register<JavaExec>("runMcpSmoke") {
+    group = "verification"
+    description = "Testa o McpManager: expande env, arranca servidores MCP e lista ferramentas."
+    mainClass.set("com.sam.nox.McpSmokeTestKt")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+
+
+// Teste ponta-a-ponta do chat com uma ação de GitHub via MCP (auto-aprova confirmações).
+// Uso: ./gradlew :desktopApp:runGithubChatSmoke
+tasks.register<JavaExec>("runGithubChatSmoke") {
+    group = "verification"
+    description = "Envia um comando de GitHub ao Nox e mostra a resposta (usa MCP)."
+    mainClass.set("com.sam.nox.GithubChatSmokeKt")
+    classpath = sourceSets["main"].runtimeClasspath
 }
 
 
@@ -44,8 +69,12 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.sam.nox"
+            packageName = "Nox"
             packageVersion = "1.0.0"
+
+            macOS {
+                iconFile.set(project.file("icons/Nox.icns"))
+            }
         }
     }
 }
@@ -56,4 +85,6 @@ tasks.withType<JavaExec>().configureEach {
     System.getenv("GROQ_API_KEY")?.let { systemProperty("groq.key", it) }
     System.getenv("TAVILY_API_KEY")?.let { systemProperty("tavily.key", it) }
     System.getenv("GITHUB_TOKEN")?.let { systemProperty("github.token", it) }
+    System.getenv("ELEVENLABS_API_KEY")?.let { systemProperty("elevenlabs.key", it) }
+    System.getenv("ELEVENLABS_VOICE_ID")?.let { systemProperty("elevenlabs.voice", it) }
 }

@@ -1,0 +1,40 @@
+schema: spec-driven
+
+context: |
+  Idioma: português do Brasil em todos os artefatos (specs, propostas, comentários, UI).
+  Mantenha os títulos estruturais do OpenSpec e as palavras SHALL/MUST em inglês.
+
+  Projeto: Nox — assistente pessoal em Kotlin Multiplatform com um orbe animado (rosto reativo
+  em Compose Canvas), chat por LLM, voz offline e ferramentas que agem no computador do usuário.
+  Foco atual: desktop (JVM/Compose). Veja openspec/project.md para a visão completa.
+
+  Arquitetura:
+  - :shared (commonMain) — chat/ (OpenRouterClient, Tool, ferramentas), ui/orb, ui/theme, speech/
+  - :desktopApp — data/ (ChatRepository), presentation/ (ChatViewModel), ui/ (telas Compose),
+    SystemTools.kt (terminal/arquivos), DesktopNox.kt (pipeline de voz)
+  - Separação pragmática ui / presentation / data.
+
+  Stack: Compose (Desktop/Material 3), Ktor + kotlinx.serialization, Groq (LLM, compatível OpenAI),
+  Tavily (busca web, opcional), Whisper/whisper-jni (voz, offline), `say` (TTS).
+
+  Convenções invioláveis:
+  - Chaves sempre por variável de ambiente (GROQ_API_KEY, TAVILY_API_KEY, GITHUB_TOKEN);
+    nunca hardcoded nem commitadas.
+  - Toda ação que altera algo externo (arquivos, sistema, GitHub) DEVE ter
+    requiresConfirmation = true e um preview legível, com confirmação do usuário na UI.
+  - Ferramentas sem dependência de SO vão em :shared/commonMain; as que usam JVM (terminal,
+    arquivos) vão em :desktopApp.
+  - Custo zero: priorize serviços com tier gratuito e processamento on-device.
+
+# Regras por artefato (opcional)
+# rules:
+#   proposal:
+#     - Deixe claro o que está fora de escopo
+#   tasks:
+#     - Quebre as tarefas em blocos pequenos e testáveis
+
+# Orientações por operação (opcional)
+# operations:
+#   apply:
+#     guidance:
+#       - Rode o build relevante após mudanças de código antes de marcar a tarefa como concluída

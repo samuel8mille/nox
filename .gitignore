@@ -20,3 +20,11 @@ node_modules/
 
 # Modelos Whisper (GGML) e áudios de teste — grandes, baixados localmente
 models/
+
+# Logs de execução/empacotamento (podem capturar segredos da linha de comando)
+.noxrun.log
+.dmg.log
+
+# Caches locais de ferramentas (Playwright MCP, config local do Claude)
+.playwright-mcp/
+.claude/

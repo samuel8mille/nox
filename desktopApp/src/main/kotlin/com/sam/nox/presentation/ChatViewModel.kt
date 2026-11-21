@@ -88,7 +88,18 @@ class ChatViewModel(
     private val scope: CoroutineScope,
     repositoryFactory: (confirm: suspend (String) -> Boolean) -> ChatRepository,
     private val voice: VoiceInput? = null,
+    /** Fala um texto em voz alta (TTS). Null = sem síntese de voz. */
+    private val speak: (suspend (String) -> Unit)? = null,
 ) {
+    /** True quando a próxima mensagem foi ditada por voz (para falar a resposta de volta). */
+    private var lastInputWasVoice = false
+
+    /**
+     * True quando o próximo `onDraftChange` vem de uma atualização programática do
+     * rascunho (ex.: transcrição de voz injetada no campo) e não de digitação do
+     * usuário — nesse caso não devemos limpar [lastInputWasVoice].
+     */
+    private var suppressNextDraftReset = false
     // O repository recebe o confirm deste ViewModel, resolvendo a dependência:
     // uma ação que exige confirmação pausa aqui até o usuário aprovar/recusar.
     private val repository: ChatRepository = repositoryFactory(::requestConfirmation)
@@ -134,8 +145,20 @@ class ChatViewModel(
     /** Atualiza o rascunho e, se ocioso, reflete Listening/Idle no orbe. */
     fun onDraftChange(value: String) {
         historyIndex = -1 // digitar sai da navegação do histórico
+        if (suppressNextDraftReset) {
+            // Mudança programática (transcrição injetada no draft): não trata como digitação.
+            suppressNextDraftReset = false
+        } else {
+            lastInputWasVoice = false // digitou → responder em texto
+        }
         _uiState.update { s ->
-            s.copy(draft = value, mood = restingMood(s, text = value, micOn = s.micOn))
+            // Digitar não deve interromper uma animação em curso (pensando/falando).
+            val mood = if (s.isSending || s.mood == NoxMood.Thinking || s.mood == NoxMood.Speaking) {
+                s.mood
+            } else {
+                restingMood(text = value, micOn = s.micOn)
+            }
+            s.copy(draft = value, mood = mood)
         }
     }
 
@@ -194,9 +217,18 @@ class ChatViewModel(
                 } catch (e: Throwable) {
                     ""
                 }
+                if (text.isNotEmpty()) lastInputWasVoice = true
+                // A atualização do draft abaixo é programática: evita que o
+                // onDraftChange resultante trate isto como digitação e limpe lastInputWasVoice.
+                suppressNextDraftReset = true
                 _uiState.update { st ->
                     val merged = (st.draft.trim() + " " + text).trim()
-                    st.copy(draft = merged, mood = restingMood(st, merged, micOn = false))
+                    val mood = if (st.isSending || st.mood == NoxMood.Thinking || st.mood == NoxMood.Speaking) {
+                        st.mood
+                    } else {
+                        restingMood(text = merged, micOn = false)
+                    }
+                    st.copy(draft = merged, mood = mood)
                 }
             }
         }
@@ -266,6 +298,12 @@ class ChatViewModel(
                 mood = NoxMood.Speaking,
             )
         }
+        // Fala a resposta em voz alta apenas quando a entrada veio por voz.
+        val falarAgora = lastInputWasVoice && speak != null
+        lastInputWasVoice = false
+        if (falarAgora) {
+            scope.launch { runCatching { speak.invoke(reply) } }
+        }
         scheduleBackToRest(speakMillisFor(reply))
     }
 
@@ -284,17 +322,17 @@ class ChatViewModel(
     private fun scheduleBackToRest(millis: Long) {
         speakingJob = scope.launch {
             delay(millis)
-            _uiState.update { s -> s.copy(mood = restingMood(s, s.draft, s.micOn)) }
+            // Força a saída de Speaking/Error: só não interrompe se um novo envio começou.
+            _uiState.update { s ->
+                if (s.isSending || s.mood == NoxMood.Thinking) s
+                else s.copy(mood = restingMood(s.draft, s.micOn))
+            }
         }
     }
 
-    /** Estado de repouso: Listening se há texto ou mic ligado; senão Idle. */
-    private fun restingMood(s: ChatUiState, text: String, micOn: Boolean): NoxMood = when {
-        s.isSending || s.mood == NoxMood.Thinking -> s.mood
-        s.mood == NoxMood.Speaking -> s.mood
-        text.isNotBlank() || micOn -> NoxMood.Listening
-        else -> NoxMood.Idle
-    }
+    /** Estado de repouso puro: Listening se há texto ou mic ligado; senão Idle. */
+    private fun restingMood(text: String, micOn: Boolean): NoxMood =
+        if (text.isNotBlank() || micOn) NoxMood.Listening else NoxMood.Idle
 
     private fun speakMillisFor(text: String): Long =
         (1200L + text.length * 22L).coerceAtMost(4200L)

@@ -320,10 +320,14 @@ private fun Composer(
                 cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.accent),
                 maxLines = 6,
                 decorationBox = { inner ->
-                    if (draft.isEmpty()) {
-                        Text(placeholder, color = colors.muted, fontSize = 15.sp)
+                    // Placeholder e campo ocupam a mesma caixa, alinhados verticalmente,
+                    // para o cursor ficar na mesma linha do texto/placeholder.
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (draft.isEmpty()) {
+                            Text(placeholder, color = colors.muted, fontSize = 15.sp)
+                        }
+                        inner()
                     }
-                    inner()
                 },
             )
             if (micAvailable) {

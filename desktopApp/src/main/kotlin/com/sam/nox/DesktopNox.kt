@@ -96,7 +96,7 @@ fun createDesktopNox(
     scope: CoroutineScope,
     modelPath: Path,
     apiKey: String = ChatRepository.resolveApiKey(),
-    model: String = "openai/gpt-oss-120b",
+    model: String = "qwen/qwen3.8-27b",
     onError: (Throwable) -> Unit = {},
 ): NoxController {
     val recognizer = SpeechRecognizer.load(modelPath)
@@ -107,7 +107,7 @@ fun createDesktopNox(
         apiKey = apiKey,
         model = model,
         tools = tools,
-        fallbackModels = listOf("openai/gpt-oss-20b"),
+        fallbackModels = listOf("openai/gpt-oss-20b", "openai/gpt-oss-120b"),
         baseUrl = "https://api.groq.com/openai/v1",
     )
 
