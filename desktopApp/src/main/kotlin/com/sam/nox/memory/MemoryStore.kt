@@ -71,6 +71,7 @@ class MemoryStore(private val file: File = defaultFile()) {
         return match
     }
 
+    /** Localização padrão do arquivo de memória. */
     companion object {
         private fun defaultFile(): File = File(System.getProperty("user.home"), ".nox/memory.json")
     }

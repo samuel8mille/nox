@@ -55,11 +55,15 @@ naming:
     constantPattern: '[A-Z][A-Za-z0-9_]*'
 
 comments:
-  # Documentação obrigatória de API pública: ligar progressivamente no futuro
-  # (o código atual ainda tem muitos símbolos públicos sem KDoc).
+  # Documentação obrigatória de API pública (como no Recorda); testes e Composables isentos.
   UndocumentedPublicClass:
-    active: false
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/jvmTest/**', '**/commonTest/**']
   UndocumentedPublicFunction:
-    active: false
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/jvmTest/**', '**/commonTest/**']
+    ignoreAnnotated: ['Composable', 'Preview']
   UndocumentedPublicProperty:
     active: false
+  OutdatedDocumentation:
+    active: true

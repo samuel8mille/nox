@@ -80,6 +80,7 @@ class McpManager(private val configFile: File = File(System.getProperty("user.ho
         null
     }
 
+    /** Encerra todos os servidores MCP iniciados por este gestor. */
     fun close() {
         clients.forEach { runCatching { it.close() } }
         clients.clear()

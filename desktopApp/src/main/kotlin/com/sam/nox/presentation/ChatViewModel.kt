@@ -330,6 +330,7 @@ class ChatViewModel(
 
     private fun speakMillisFor(text: String): Long = (1200L + text.length * 22L).coerceAtMost(4200L)
 
+    /** Gerador de ids incrementais para as mensagens. */
     companion object {
         private var counter = 0L
 
@@ -344,17 +345,12 @@ class ChatViewModel(
  */
 private fun stripMarkdown(text: String): String {
     var t = text
-    // Links [texto](url) → texto
     t = Regex("""\[([^\]]+)]\((https?://[^)]+)\)""").replace(t) { it.groupValues[1] }
-    // Negrito/itálico: **x**, __x__, *x*, _x_ → x
     t = Regex("""(\*\*|__)(.+?)\1""").replace(t) { it.groupValues[2] }
     t = Regex("""(?<!\*)\*(?!\s)([^*\n]+?)\*(?!\*)""").replace(t) { it.groupValues[1] }
     t = Regex("""(?<!_)_(?!\s)([^_\n]+?)_(?!_)""").replace(t) { it.groupValues[1] }
-    // Código `x` → x
     t = Regex("""`([^`]+)`""").replace(t) { it.groupValues[1] }
-    // Títulos "# " / "## " no início da linha
     t = Regex("""(?m)^\s{0,3}#{1,6}\s+""").replace(t, "")
-    // Referências de citação tipo 【2†L1-L4】 (que alguns modelos inserem)
     t = Regex("""【[^】]*】""").replace(t, "")
     return t.trim()
 }

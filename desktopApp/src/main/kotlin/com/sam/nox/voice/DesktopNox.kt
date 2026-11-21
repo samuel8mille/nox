@@ -94,6 +94,8 @@ class SystemSpeaker(private val voice: String? = null) : Speaker {
  * @param scope escopo de corrotina (ex.: rememberCoroutineScope na UI).
  * @param modelPath caminho do modelo GGML do Whisper (ex.: ggml-base.bin).
  * @param apiKey API key do OpenRouter (padrão: OPENROUTER_API_KEY / -Dopenrouter.key).
+ * @param model id do modelo LLM a usar na conversa.
+ * @param onError callback chamado quando ocorre um erro durante um turno.
  */
 fun createDesktopNox(
     scope: CoroutineScope,
