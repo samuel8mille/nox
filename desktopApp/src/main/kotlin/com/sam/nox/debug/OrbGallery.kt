@@ -1,4 +1,4 @@
-package com.sam.nox
+package com.sam.nox.debug
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,14 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -47,7 +45,8 @@ fun OrbGallery() {
     NoxTheme(dark = true) {
         val colors = NoxTheme.colors
         Column(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .fillMaxSize()
                 .background(colors.bg)
                 .padding(32.dp),
@@ -63,13 +62,14 @@ fun OrbGallery() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                val items = listOf(
-                    NoxMood.Idle to "Pronto",
-                    NoxMood.Listening to "Ouvindo",
-                    NoxMood.Thinking to "Pensando",
-                    NoxMood.Speaking to "Respondendo",
-                    NoxMood.Error to "Erro",
-                )
+                val items =
+                    listOf(
+                        NoxMood.Idle to "Pronto",
+                        NoxMood.Listening to "Ouvindo",
+                        NoxMood.Thinking to "Pensando",
+                        NoxMood.Speaking to "Respondendo",
+                        NoxMood.Error to "Erro",
+                    )
                 items.forEach { (mood, label) ->
                     GalleryCell(mood = mood, label = label, modifier = Modifier.weight(1f))
                 }
@@ -86,7 +86,8 @@ private fun GalleryCell(mood: NoxMood, label: String, modifier: Modifier) {
     val scope = rememberCoroutineScope()
 
     Column(
-        modifier = modifier
+        modifier =
+        modifier
             .clip(RoundedCornerShape(18.dp))
             .background(colors.panel)
             .border(1.dp, colors.line, RoundedCornerShape(18.dp))
@@ -97,7 +98,8 @@ private fun GalleryCell(mood: NoxMood, label: String, modifier: Modifier) {
         var look by remember { mutableStateOf(Offset.Zero) }
         var cellSize by remember { mutableStateOf(Offset.Zero) }
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .size(200.dp)
                 .onGloballyPositioned { cellSize = Offset(it.size.width.toFloat(), it.size.height.toFloat()) }
                 .onPointerEvent(PointerEventType.Move) { e ->
@@ -107,11 +109,13 @@ private fun GalleryCell(mood: NoxMood, label: String, modifier: Modifier) {
                         val ny = (pos.y - cellSize.y / 2f) / (cellSize.y / 2f)
                         look = Offset(nx.coerceIn(-1f, 1f) * 14f, ny.coerceIn(-1f, 1f) * 10f)
                     }
-                }
-                .onPointerEvent(PointerEventType.Exit) { look = Offset.Zero }
+                }.onPointerEvent(PointerEventType.Exit) { look = Offset.Zero }
                 .clickable {
                     poked = true
-                    scope.launch { delay(700); poked = false }
+                    scope.launch {
+                        delay(700)
+                        poked = false
+                    }
                 },
             contentAlignment = Alignment.Center,
         ) {

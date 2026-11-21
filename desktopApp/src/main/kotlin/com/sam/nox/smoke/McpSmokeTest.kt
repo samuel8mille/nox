@@ -1,4 +1,6 @@
-package com.sam.nox
+package com.sam.nox.smoke
+
+import com.sam.nox.mcp.McpManager
 
 /**
  * Verificação rápida (fora da app Compose) de que o McpManager lê o ~/.nox/mcp.json,

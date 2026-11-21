@@ -24,17 +24,10 @@ private data class TavilyRequest(
 )
 
 @Serializable
-private data class TavilyResult(
-    val title: String = "",
-    val url: String = "",
-    val content: String = "",
-)
+private data class TavilyResult(val title: String = "", val url: String = "", val content: String = "")
 
 @Serializable
-private data class TavilyResponse(
-    val answer: String? = null,
-    val results: List<TavilyResult> = emptyList(),
-)
+private data class TavilyResponse(val answer: String? = null, val results: List<TavilyResult> = emptyList())
 
 /**
  * Cria a ferramenta de busca web via Tavily — uma API de busca feita para LLMs,
@@ -43,31 +36,36 @@ private data class TavilyResponse(
  * Requer uma API key (criada em https://tavily.com, free tier de 1000 buscas/mês),
  * lida por padrão de TAVILY_API_KEY / -Dtavily.key.
  */
-fun webSearchTool(
-    apiKey: String,
-    httpClient: HttpClient = createHttpClient(),
-): Tool {
-    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+fun webSearchTool(apiKey: String, httpClient: HttpClient = createHttpClient()): Tool {
+    val json =
+        Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+        }
 
     return Tool(
         name = "pesquisar_web",
-        description = "Pesquisa na web informações atuais: notícias, eventos, jogos, " +
+        description =
+        "Pesquisa na web informações atuais: notícias, eventos, jogos, " +
             "datas, preços, pessoas, lugares e qualquer fato que possa mudar com o tempo. " +
             "Use sempre que a resposta puder depender de informação recente ou que você " +
             "não saiba com certeza.",
-        parameters = JsonObject(
+        parameters =
+        JsonObject(
             mapOf(
                 "type" to JsonPrimitive("object"),
-                "properties" to JsonObject(
-                    mapOf(
-                        "consulta" to JsonObject(
-                            mapOf(
-                                "type" to JsonPrimitive("string"),
-                                "description" to JsonPrimitive("O termo ou pergunta a pesquisar."),
-                            ),
+                "properties" to
+                    JsonObject(
+                        mapOf(
+                            "consulta" to
+                                JsonObject(
+                                    mapOf(
+                                        "type" to JsonPrimitive("string"),
+                                        "description" to JsonPrimitive("O termo ou pergunta a pesquisar."),
+                                    ),
+                                ),
                         ),
                     ),
-                ),
                 "required" to kotlinx.serialization.json.JsonArray(listOf(JsonPrimitive("consulta"))),
             ),
         ),
@@ -76,11 +74,13 @@ fun webSearchTool(
         if (query.isEmpty()) return@Tool "Erro: consulta vazia."
 
         try {
-            val raw = httpClient.post("https://api.tavily.com/search") {
-                contentType(ContentType.Application.Json)
-                header("Authorization", "Bearer $apiKey")
-                setBody(json.encodeToString(TavilyRequest(query = query)))
-            }.bodyAsText()
+            val raw =
+                httpClient
+                    .post("https://api.tavily.com/search") {
+                        contentType(ContentType.Application.Json)
+                        header("Authorization", "Bearer $apiKey")
+                        setBody(json.encodeToString(TavilyRequest(query = query)))
+                    }.bodyAsText()
 
             val resp = json.decodeFromString<TavilyResponse>(raw)
             formatResult(resp)

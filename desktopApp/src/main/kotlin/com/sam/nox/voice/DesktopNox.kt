@@ -1,5 +1,10 @@
-package com.sam.nox
+package com.sam.nox.voice
 
+import com.sam.nox.AudioRecorder
+import com.sam.nox.ChatEngine
+import com.sam.nox.NoxController
+import com.sam.nox.Speaker
+import com.sam.nox.Transcriber
 import com.sam.nox.chat.OpenRouterClient
 import com.sam.nox.chat.builtInTools
 import com.sam.nox.chat.webSearchTool
@@ -26,13 +31,14 @@ class DesktopAudioRecorder : AudioRecorder {
     override fun start() {
         val deferred = CompletableDeferred<FloatArray>()
         samples = deferred
-        worker = thread(name = "nox-mic") {
-            try {
-                deferred.complete(MicrophoneCapture.record())
-            } catch (e: Throwable) {
-                deferred.completeExceptionally(e)
+        worker =
+            thread(name = "nox-mic") {
+                try {
+                    deferred.complete(MicrophoneCapture.record())
+                } catch (e: Throwable) {
+                    deferred.completeExceptionally(e)
+                }
             }
-        }
     }
 
     override suspend fun stop(): FloatArray {
@@ -46,18 +52,13 @@ class DesktopAudioRecorder : AudioRecorder {
 }
 
 /** Adaptador do [SpeechRecognizer] (Whisper) para a interface [Transcriber]. */
-class DesktopTranscriber(
-    private val recognizer: SpeechRecognizer,
-    private val language: String? = "pt",
-) : Transcriber {
-    override suspend fun transcribe(samples: FloatArray): String =
-        recognizer.transcribe(samples, language).text
+class DesktopTranscriber(private val recognizer: SpeechRecognizer, private val language: String? = "pt") :
+    Transcriber {
+    override suspend fun transcribe(samples: FloatArray): String = recognizer.transcribe(samples, language).text
 }
 
 /** Adaptador do [OpenRouterClient] para a interface [ChatEngine]. */
-class DesktopChatEngine(
-    private val llm: OpenRouterClient,
-) : ChatEngine {
+class DesktopChatEngine(private val llm: OpenRouterClient) : ChatEngine {
     override suspend fun reply(userText: String): String = llm.send(userText)
 }
 
@@ -65,17 +66,19 @@ class DesktopChatEngine(
  * TTS simples no macOS via comando `say` (offline, sem dependências).
  * Em outros sistemas, ou se `say` não existir, fala vira no-op silencioso.
  */
-class SystemSpeaker(
-    private val voice: String? = null,
-) : Speaker {
+class SystemSpeaker(private val voice: String? = null) : Speaker {
     override suspend fun speak(text: String) = withContext(Dispatchers.IO) {
         if (text.isBlank()) return@withContext
         try {
-            val cmd = buildList {
-                add("say")
-                if (voice != null) { add("-v"); add(voice) }
-                add(text)
-            }
+            val cmd =
+                buildList {
+                    add("say")
+                    if (voice != null) {
+                        add("-v")
+                        add(voice)
+                    }
+                    add(text)
+                }
             ProcessBuilder(cmd).inheritIO().start().waitFor()
             Unit
         } catch (_: Throwable) {
@@ -101,15 +104,20 @@ fun createDesktopNox(
 ): NoxController {
     val recognizer = SpeechRecognizer.load(modelPath)
     val tavilyKey = ChatRepository.resolveTavilyKey()
-    val tools = if (tavilyKey.isNullOrBlank()) builtInTools
-    else builtInTools + webSearchTool(apiKey = tavilyKey)
-    val llm = OpenRouterClient(
-        apiKey = apiKey,
-        model = model,
-        tools = tools,
-        fallbackModels = listOf("openai/gpt-oss-20b", "openai/gpt-oss-120b"),
-        baseUrl = "https://api.groq.com/openai/v1",
-    )
+    val tools =
+        if (tavilyKey.isNullOrBlank()) {
+            builtInTools
+        } else {
+            builtInTools + webSearchTool(apiKey = tavilyKey)
+        }
+    val llm =
+        OpenRouterClient(
+            apiKey = apiKey,
+            model = model,
+            tools = tools,
+            fallbackModels = listOf("openai/gpt-oss-20b", "openai/gpt-oss-120b"),
+            baseUrl = "https://api.groq.com/openai/v1",
+        )
 
     return NoxController(
         scope = scope,
@@ -128,7 +136,7 @@ fun createDesktopNox(
 class DesktopVoiceInput(
     private val recorder: DesktopAudioRecorder = DesktopAudioRecorder(),
     private val transcriber: DesktopTranscriber,
-) : com.sam.nox.presentation.VoiceInput {
+) : VoiceInput {
     override fun start() = recorder.start()
 
     override suspend fun stopAndTranscribe(): String {
@@ -142,7 +150,7 @@ class DesktopVoiceInput(
  * Cria a entrada de voz se houver modelo Whisper; devolve null caso contrário
  * (o botão de microfone fica indisponível).
  */
-fun createVoiceInput(modelPath: Path?): com.sam.nox.presentation.VoiceInput? {
+fun createVoiceInput(modelPath: Path?): VoiceInput? {
     if (modelPath == null) return null
     return try {
         val recognizer = SpeechRecognizer.load(modelPath)

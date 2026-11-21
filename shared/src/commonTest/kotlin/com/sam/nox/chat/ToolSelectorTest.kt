@@ -1,13 +1,11 @@
 package com.sam.nox.chat
 
-import kotlinx.serialization.json.JsonElement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ToolSelectorTest {
-
     private fun tool(name: String) = Tool(
         name = name,
         description = "ferramenta $name",
@@ -73,11 +71,12 @@ class ToolSelectorTest {
     @Test
     fun capsToolsPerGroup() {
         // Grupo google tem 60 tools; com teto de 25 por grupo, só 25 devem entrar.
-        val selected = ToolSelector.select(
-            sampleTools(),
-            recentText = "lê o meu email no gmail",
-            maxToolsPerGroup = 25,
-        )
+        val selected =
+            ToolSelector.select(
+                sampleTools(),
+                recentText = "lê o meu email no gmail",
+                maxToolsPerGroup = 25,
+            )
         val googleCount = selected.count { it.name.startsWith("google__") }
         assertTrue(googleCount <= 25, "esperava <=25 tools google, veio $googleCount")
     }
@@ -85,27 +84,30 @@ class ToolSelectorTest {
     @Test
     fun prefersRelevantToolsWithinGroup() {
         // Com um nome específico, a tool correspondente deve sobreviver ao corte do grupo.
-        val tools = buildList {
-            add(tool("obter_hora_atual"))
-            repeat(40) { add(tool("google__gmail_misc_$it")) }
-            add(tool("google__calendar_create_event")) // alvo
-        }
-        val selected = ToolSelector.select(
-            tools,
-            recentText = "cria um evento no calendar",
-            maxToolsPerGroup = 5,
-        )
+        val tools =
+            buildList {
+                add(tool("obter_hora_atual"))
+                repeat(40) { add(tool("google__gmail_misc_$it")) }
+                add(tool("google__calendar_create_event")) // alvo
+            }
+        val selected =
+            ToolSelector.select(
+                tools,
+                recentText = "cria um evento no calendar",
+                maxToolsPerGroup = 5,
+            )
         assertTrue("google__calendar_create_event" in names(selected))
     }
 
     @Test
     fun respectsMaxToolsCeiling() {
         // Ativa github E google (muitas tools) e força um teto baixo.
-        val selected = ToolSelector.select(
-            sampleTools(),
-            recentText = "veja meu email e os repositórios do github",
-            maxTools = 50,
-        )
+        val selected =
+            ToolSelector.select(
+                sampleTools(),
+                recentText = "veja meu email e os repositórios do github",
+                maxTools = 50,
+            )
         assertTrue(selected.size <= 50)
         // o núcleo tem de sobreviver ao corte
         assertTrue("obter_hora_atual" in names(selected))
