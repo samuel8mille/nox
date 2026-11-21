@@ -1,8 +1,6 @@
 package com.sam.nox.chat
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -13,13 +11,13 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlin.time.Clock
 
 // ----------------------------------------------------------------------------
 // Modelo do protocolo OpenAI-compatível (usado pelo OpenRouter).
@@ -27,7 +25,7 @@ import kotlinx.serialization.json.JsonObject
 // ----------------------------------------------------------------------------
 
 @Serializable
-private data class ORMessage(
+internal data class ORMessage(
     val role: String,
     val content: String? = null,
     @SerialName("tool_calls") val toolCalls: List<ORToolCall>? = null,
@@ -36,7 +34,7 @@ private data class ORMessage(
 )
 
 @Serializable
-private data class ORToolCall(
+internal data class ORToolCall(
     val id: String = "",
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val type: String = "function",
@@ -44,33 +42,25 @@ private data class ORToolCall(
 )
 
 @Serializable
-private data class ORToolCallFunction(
+internal data class ORToolCallFunction(
     val name: String,
-    /** Argumentos vêm/vão como string JSON (formato OpenAI). */
+    // Argumentos vêm/vão como string JSON (formato OpenAI).
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val arguments: String = "{}",
 )
 
 @Serializable
-private data class ORToolSpec(
+internal data class ORToolSpec(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val type: String = "function",
     val function: ORFunctionSpec,
 )
 
 @Serializable
-private data class ORFunctionSpec(
-    val name: String,
-    val description: String,
-    val parameters: JsonObject,
-)
+internal data class ORFunctionSpec(val name: String, val description: String, val parameters: JsonObject)
 
 @Serializable
-private data class ORRequest(
-    val model: String,
-    val messages: List<ORMessage>,
-    val tools: List<ORToolSpec>? = null,
-)
+private data class ORRequest(val model: String, val messages: List<ORMessage>, val tools: List<ORToolSpec>? = null)
 
 @Serializable
 private data class ORChoice(
@@ -79,10 +69,7 @@ private data class ORChoice(
 )
 
 @Serializable
-private data class ORError(
-    val message: String? = null,
-    val code: Int? = null,
-)
+private data class ORError(val message: String? = null, val code: Int? = null)
 
 /** Mensagem amigável a partir do erro do OpenRouter (desembrulha 429, etc.). */
 private fun ORError.friendly(): String = when (code) {
@@ -94,10 +81,86 @@ private fun ORError.friendly(): String = when (code) {
 }
 
 @Serializable
-private data class ORResponse(
-    val choices: List<ORChoice> = emptyList(),
-    val error: ORError? = null,
-)
+private data class ORResponse(val choices: List<ORChoice> = emptyList(), val error: ORError? = null)
+
+/**
+ * Responsável por tudo relativo às ferramentas numa conversa: seleção dinâmica das que
+ * são oferecidas ao modelo (via [ToolSelector], respeitando o limite do provedor),
+ * confirmação das ações sensíveis e despacho da execução. Isola essa responsabilidade
+ * do loop de conversa do [OpenRouterClient] (SRP).
+ *
+ * [confirm] recebe o nome da ferramenta e o preview da ação; [ConfirmDecision.APPROVE_ALWAYS]
+ * faz as próximas chamadas da MESMA ferramenta, nesta conversa, não voltarem a pedir confirmação.
+ */
+internal class ToolExecutor(
+    private val tools: List<Tool>,
+    private val confirm: suspend (toolName: String, preview: String) -> ConfirmDecision,
+    private val json: Json,
+) {
+    private val toolsByName = tools.associateBy { it.name }
+
+    // Ferramentas que o usuário escolheu "permitir sempre" nesta conversa.
+    private val alwaysAllowed = mutableSetOf<String>()
+
+    /**
+     * Especificações das ferramentas a oferecer ao modelo para [forText]. Seleciona
+     * dinamicamente um subconjunto relevante (ver [ToolSelector]). Null quando não há tools.
+     */
+    fun specsFor(forText: String): List<ORToolSpec>? = tools
+        .takeIf { it.isNotEmpty() }
+        ?.let { ToolSelector.select(it, forText) }
+        ?.map { ORToolSpec(function = ORFunctionSpec(it.name, it.description, it.parameters)) }
+
+    /** Executa a ferramenta pedida, pedindo confirmação se necessário, e devolve o resultado. */
+    suspend fun execute(function: ORToolCallFunction): String {
+        val tool =
+            toolsByName[function.name]
+                ?: return "Erro: ferramenta '${function.name}' não existe."
+        val args =
+            runCatching {
+                json.decodeFromString<JsonObject>(function.arguments)
+            }.getOrDefault(JsonObject(emptyMap()))
+
+        if (tool.requiresConfirmation && tool.name !in alwaysAllowed) {
+            val preview = tool.preview?.invoke(args) ?: tool.description
+            when (confirm(tool.name, preview)) {
+                ConfirmDecision.REJECT ->
+                    return "O usuário RECUSOU esta ação. Não a execute e pergunte como prosseguir."
+                ConfirmDecision.APPROVE_ALWAYS -> alwaysAllowed.add(tool.name)
+                ConfirmDecision.APPROVE_ONCE -> Unit
+            }
+        }
+
+        return try {
+            tool.execute(args)
+        } catch (e: Throwable) {
+            "Erro ao executar '${function.name}': ${e.message}"
+        }
+    }
+
+    /** Esquece as permissões "sempre" desta conversa. */
+    fun reset() = alwaysAllowed.clear()
+}
+
+/**
+ * Executa um pedido ao modelo com estratégia de fallback: tenta [candidates] em ordem e
+ * devolve a primeira resposta bem-sucedida; só propaga o erro se todos falharem. Isola a
+ * política de resiliência do loop de conversa (SRP).
+ */
+internal suspend fun callWithFallback(
+    candidates: List<String>,
+    request: suspend (modelId: String) -> ORMessage,
+): ORMessage {
+    var lastError: OpenRouterException? = null
+    for (modelId in candidates) {
+        try {
+            return request(modelId)
+        } catch (e: OpenRouterException) {
+            lastError = e
+        }
+    }
+    throw lastError ?: OpenRouterException("Falha ao consultar o modelo.")
+}
 
 /**
  * Cliente da conversa (LLM) via OpenRouter — endpoint compatível com OpenAI que dá
@@ -107,63 +170,46 @@ private data class ORResponse(
  * A busca web é fornecida como uma ferramenta comum (ver [webSearchTool]).
  *
  * @param model id do modelo (ex.: "nvidia/nemotron-3.5-lightning:free").
+ * @param fallbackModels Modelos alternativos tentados em ordem se o principal falhar — dá
+ *   resiliência a provedores instáveis.
+ * @param confirm Pedido de confirmação para ferramentas que alteram algo externo. Recebe o nome da
+ *   ferramenta e o preview da ação e devolve a decisão; [ConfirmDecision.APPROVE_ALWAYS] faz as
+ *   próximas chamadas da MESMA ferramenta, nesta conversa, não voltarem a pedir confirmação. Por
+ *   padrão aprova tudo (sem confirmação).
+ * @param extraContext Contexto extra injetado no system prompt a cada mensagem (ao lado da
+ *   data/hora), ex.: os fatos lembrados sobre o usuário. Vazio = nada a acrescentar.
+ * @param httpClient Cliente HTTP já configurado (ver [openRouterHttpClient]).
  */
 class OpenRouterClient(
     private val apiKey: String,
     val model: String = "nvidia/nemotron-3.5-super-vl:free",
     private val systemPrompt: String? = defaultSystemPrompt,
     private val tools: List<Tool> = emptyList(),
-    /**
-     * Modelos alternativos (que fazem tool calling em JSON, formato padrão),
-     * tentados em ordem se o principal falhar — dá resiliência a provedores instáveis.
-     */
-    private val fallbackModels: List<String> = listOf(
-        "nvidia/nemotron-3-ultra-550b-a55b:free",
-    ),
-    /**
-     * Pedido de confirmação para ferramentas que alteram algo externo. Recebe o
-     * texto de preview da ação e devolve true (aprovar) ou false (recusar).
-     * Por padrão aprova tudo (sem confirmação).
-     */
-    private val confirm: suspend (preview: String) -> Boolean = { true },
-    /**
-     * Contexto extra injetado no system prompt a cada mensagem (ao lado da data/hora).
-     * Usado, por exemplo, para os fatos lembrados sobre o usuário. Vazio = nada a acrescentar.
-     */
+    private val fallbackModels: List<String> =
+        listOf(
+            "nvidia/nemotron-3-ultra-550b-a55b:free",
+        ),
+    private val confirm: suspend (toolName: String, preview: String) -> ConfirmDecision =
+        { _, _ -> ConfirmDecision.APPROVE_ONCE },
     private val extraContext: () -> String = { "" },
-    private val httpClient: HttpClient = createHttpClient(),
+    private val httpClient: HttpClient = openRouterHttpClient(),
     private val baseUrl: String = "https://openrouter.ai/api/v1",
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    private val client = httpClient.config {
-        install(ContentNegotiation) { json(json) }
-        install(HttpTimeout) {
-            requestTimeoutMillis = 120_000
-            connectTimeoutMillis = 15_000
-            socketTimeoutMillis = 120_000
-        }
-    }
+    // Cliente HTTP já configurado (ContentNegotiation + timeouts) — ver openRouterHttpClient().
+    private val client = httpClient
 
-    private val toolsByName = tools.associateBy { it.name }
-
-    /**
-     * Especificações das ferramentas a enviar ao modelo nesta requisição. Seleciona
-     * dinamicamente um subconjunto relevante a [forText] (ver [ToolSelector]) para
-     * respeitar o limite de ferramentas do provedor. Null quando não há ferramentas.
-     */
-    private fun toolSpecsFor(forText: String): List<ORToolSpec>? = tools
-        .takeIf { it.isNotEmpty() }
-        ?.let { ToolSelector.select(it, forText) }
-        ?.map { ORToolSpec(function = ORFunctionSpec(it.name, it.description, it.parameters)) }
-
-    /** Texto recente (últimas mensagens do usuário) que guia a seleção de ferramentas. */
-    private fun recentUserText(): String =
-        history.filter { it.role == "user" }
-            .takeLast(2)
-            .joinToString(" ") { it.content.orEmpty() }
+    // Seleção + execução de ferramentas (confirmação, "permitir sempre") isoladas num colaborador.
+    private val toolExecutor = ToolExecutor(tools, confirm, json)
 
     private val history = mutableListOf<ORMessage>()
+
+    // Texto recente (últimas mensagens do usuário) que guia a seleção de ferramentas.
+    private fun recentUserText(): String = history
+        .filter { it.role == "user" }
+        .takeLast(2)
+        .joinToString(" ") { it.content.orEmpty() }
 
     /** Envia a mensagem do usuário e devolve a resposta da assistente. */
     suspend fun send(userMessage: String): String {
@@ -190,7 +236,7 @@ class OpenRouterClient(
 
             // Executa cada ferramenta pedida e devolve o resultado (role=tool).
             for (call in calls) {
-                val result = executeTool(call.function)
+                val result = toolExecutor.execute(call.function)
                 history.add(
                     ORMessage(
                         role = "tool",
@@ -201,40 +247,35 @@ class OpenRouterClient(
                 )
             }
         }
-        return history.lastOrNull { it.role == "assistant" }?.content?.trim().orEmpty()
+        return history
+            .lastOrNull { it.role == "assistant" }
+            ?.content
+            ?.trim()
+            .orEmpty()
     }
 
-    private suspend fun requestOnce(): ORMessage {
-        // Tenta o modelo principal e, se falhar (provedor instável), cai para os
-        // fallbacks em ordem. Só propaga o erro se todos falharem.
-        val candidates = listOf(model) + fallbackModels
-        var lastError: OpenRouterException? = null
-        for (m in candidates) {
-            try {
-                return requestModel(m)
-            } catch (e: OpenRouterException) {
-                lastError = e
-            }
-        }
-        throw lastError ?: OpenRouterException("Falha ao consultar o modelo.")
-    }
+    // Tenta o modelo principal e cai para os fallbacks em ordem (ver callWithFallback).
+    private suspend fun requestOnce(): ORMessage = callWithFallback(listOf(model) + fallbackModels) { requestModel(it) }
 
     private suspend fun requestModel(modelId: String): ORMessage {
-        val messages = buildList {
-            if (systemPrompt != null) {
-                val extra = extraContext().trim().let { if (it.isEmpty()) "" else "\n\n$it" }
-                add(ORMessage(role = "system", content = currentContext() + extra + "\n\n" + systemPrompt))
+        val messages =
+            buildList {
+                if (systemPrompt != null) {
+                    val extra = extraContext().trim().let { if (it.isEmpty()) "" else "\n\n$it" }
+                    add(ORMessage(role = "system", content = currentContext() + extra + "\n\n" + systemPrompt))
+                }
+                addAll(history)
             }
-            addAll(history)
-        }
-        val tools = toolSpecsFor(recentUserText())
+        val tools = toolExecutor.specsFor(recentUserText())
         val body = json.encodeToString(ORRequest(model = modelId, messages = messages, tools = tools))
 
-        val text = client.post("$baseUrl/chat/completions") {
-            contentType(ContentType.Application.Json)
-            header("Authorization", "Bearer $apiKey")
-            setBody(body)
-        }.bodyAsText()
+        val text =
+            client
+                .post("$baseUrl/chat/completions") {
+                    contentType(ContentType.Application.Json)
+                    header("Authorization", "Bearer $apiKey")
+                    setBody(body)
+                }.bodyAsText()
         val response = json.decodeFromString<ORResponse>(text)
         response.error?.let { throw OpenRouterException(it.friendly()) }
         val msg = response.choices.firstOrNull()?.message
@@ -245,31 +286,10 @@ class OpenRouterClient(
         return msg
     }
 
-    private suspend fun executeTool(function: ORToolCallFunction): String {
-        val tool = toolsByName[function.name]
-            ?: return "Erro: ferramenta '${function.name}' não existe."
-        val args = runCatching {
-            json.decodeFromString<JsonObject>(function.arguments)
-        }.getOrDefault(JsonObject(emptyMap()))
-
-        // Ações que alteram algo externo exigem confirmação do usuário.
-        if (tool.requiresConfirmation) {
-            val preview = tool.preview?.invoke(args) ?: tool.description
-            if (!confirm(preview)) {
-                return "O usuário RECUSOU esta ação. Não a execute e pergunte como prosseguir."
-            }
-        }
-
-        return try {
-            tool.execute(args)
-        } catch (e: Throwable) {
-            "Erro ao executar '${function.name}': ${e.message}"
-        }
-    }
-
-    /** Limpa o histórico. */
+    /** Limpa o histórico e as permissões "sempre" desta conversa. */
     fun reset() {
         history.clear()
+        toolExecutor.reset()
     }
 
     fun close() = client.close()
@@ -277,22 +297,24 @@ class OpenRouterClient(
     companion object {
         private fun currentContext(): String {
             val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            val dia = when (now.dayOfWeek) {
-                DayOfWeek.MONDAY -> "segunda-feira"
-                DayOfWeek.TUESDAY -> "terça-feira"
-                DayOfWeek.WEDNESDAY -> "quarta-feira"
-                DayOfWeek.THURSDAY -> "quinta-feira"
-                DayOfWeek.FRIDAY -> "sexta-feira"
-                DayOfWeek.SATURDAY -> "sábado"
-                DayOfWeek.SUNDAY -> "domingo"
-                else -> ""
-            }
+            val dia =
+                when (now.dayOfWeek) {
+                    DayOfWeek.MONDAY -> "segunda-feira"
+                    DayOfWeek.TUESDAY -> "terça-feira"
+                    DayOfWeek.WEDNESDAY -> "quarta-feira"
+                    DayOfWeek.THURSDAY -> "quinta-feira"
+                    DayOfWeek.FRIDAY -> "sexta-feira"
+                    DayOfWeek.SATURDAY -> "sábado"
+                    DayOfWeek.SUNDAY -> "domingo"
+                    else -> ""
+                }
             val h = now.hour.toString().padStart(2, '0')
             val m = now.minute.toString().padStart(2, '0')
             return "Contexto: agora é $dia, ${now.dayOfMonth}/${now.monthNumber}/${now.year}, $h:$m."
         }
 
-        private val defaultSystemPrompt = """
+        private val defaultSystemPrompt =
+            """
             Você é a Nox, uma assistente útil que responde em português de forma clara e concisa.
 
             Você tem uma ferramenta de pesquisa na web. Para perguntas sobre fatos, pessoas,
@@ -319,7 +341,7 @@ class OpenRouterClient(
 
             Responda em texto simples, sem formatação Markdown. Não use asteriscos para negrito
             ou itálico (**, *), nem títulos (#), nem marcadores de código (`).
-        """.trimIndent()
+            """.trimIndent()
     }
 }
 
