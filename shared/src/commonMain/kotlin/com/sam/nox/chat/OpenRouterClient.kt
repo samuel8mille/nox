@@ -147,9 +147,21 @@ class OpenRouterClient(
 
     private val toolsByName = tools.associateBy { it.name }
 
-    private val toolSpecs: List<ORToolSpec>? = tools
+    /**
+     * Especificações das ferramentas a enviar ao modelo nesta requisição. Seleciona
+     * dinamicamente um subconjunto relevante a [forText] (ver [ToolSelector]) para
+     * respeitar o limite de ferramentas do provedor. Null quando não há ferramentas.
+     */
+    private fun toolSpecsFor(forText: String): List<ORToolSpec>? = tools
         .takeIf { it.isNotEmpty() }
+        ?.let { ToolSelector.select(it, forText) }
         ?.map { ORToolSpec(function = ORFunctionSpec(it.name, it.description, it.parameters)) }
+
+    /** Texto recente (últimas mensagens do usuário) que guia a seleção de ferramentas. */
+    private fun recentUserText(): String =
+        history.filter { it.role == "user" }
+            .takeLast(2)
+            .joinToString(" ") { it.content.orEmpty() }
 
     private val history = mutableListOf<ORMessage>()
 
@@ -215,7 +227,8 @@ class OpenRouterClient(
             }
             addAll(history)
         }
-        val body = json.encodeToString(ORRequest(model = modelId, messages = messages, tools = toolSpecs))
+        val tools = toolSpecsFor(recentUserText())
+        val body = json.encodeToString(ORRequest(model = modelId, messages = messages, tools = tools))
 
         val text = client.post("$baseUrl/chat/completions") {
             contentType(ContentType.Application.Json)
