@@ -2,6 +2,8 @@ package com.sam.nox.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -46,7 +46,8 @@ fun OrbPanel(
     val status = statusFor(mood)
 
     Column(
-        modifier = modifier
+        modifier =
+        modifier
             .fillMaxHeight()
             .background(colors.panel)
             .padding(start = 32.dp, end = 32.dp, top = 40.dp, bottom = 28.dp),
@@ -60,7 +61,8 @@ fun OrbPanel(
             // Área clicável de 320×340 em torno do orbe de 240dp.
             val interaction = remember { MutableInteractionSource() }
             Box(
-                modifier = Modifier
+                modifier =
+                Modifier
                     .size(width = 320.dp, height = 340.dp)
                     .clickable(interactionSource = interaction, indication = null, onClick = onPoke),
                 contentAlignment = Alignment.Center,
@@ -102,7 +104,8 @@ fun OrbPanel(
 private fun StatusPill(label: String, dot: Color) {
     val colors = NoxTheme.colors
     Row(
-        modifier = Modifier
+        modifier =
+        Modifier
             .clip(CircleShape)
             .background(colors.surface)
             .border(1.dp, colors.line, CircleShape)
@@ -111,7 +114,8 @@ private fun StatusPill(label: String, dot: Color) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .size(8.dp)
                 .clip(CircleShape)
                 .background(dot),

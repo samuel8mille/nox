@@ -21,7 +21,8 @@ import com.sam.nox.ui.theme.NoxTheme
 fun App() {
     NoxTheme {
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .fillMaxSize()
                 .background(NoxTheme.colors.bg),
             contentAlignment = Alignment.Center,

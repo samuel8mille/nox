@@ -38,14 +38,18 @@ fun MicIcon(tint: Color, size: Dp = 20.dp, modifier: Modifier = Modifier) {
             style = stroke,
         )
         // Arco inferior: M5 11 a7 7 0 0 0 14 0
-        val arc = Path().apply {
-            moveTo(w * (5f / 24f), h * (11f / 24f))
-            cubicTo(
-                w * (5f / 24f), h * (16f / 24f),
-                w * (19f / 24f), h * (16f / 24f),
-                w * (19f / 24f), h * (11f / 24f),
-            )
-        }
+        val arc =
+            Path().apply {
+                moveTo(w * (5f / 24f), h * (11f / 24f))
+                cubicTo(
+                    w * (5f / 24f),
+                    h * (16f / 24f),
+                    w * (19f / 24f),
+                    h * (16f / 24f),
+                    w * (19f / 24f),
+                    h * (11f / 24f),
+                )
+            }
         drawPath(arc, tint, style = stroke)
         // Haste: M12 18 v3
         drawLine(
@@ -73,11 +77,12 @@ fun SendArrowIcon(tint: Color, size: Dp = 18.dp, modifier: Modifier = Modifier) 
             cap = StrokeCap.Round,
         )
         // Ponta: M6 11 l6-6 l6 6
-        val head = Path().apply {
-            moveTo(w * (6f / 24f), h * (11f / 24f))
-            lineTo(w * (12f / 24f), h * (5f / 24f))
-            lineTo(w * (18f / 24f), h * (11f / 24f))
-        }
+        val head =
+            Path().apply {
+                moveTo(w * (6f / 24f), h * (11f / 24f))
+                lineTo(w * (12f / 24f), h * (5f / 24f))
+                lineTo(w * (18f / 24f), h * (11f / 24f))
+            }
         drawPath(head, tint, style = stroke)
     }
 }

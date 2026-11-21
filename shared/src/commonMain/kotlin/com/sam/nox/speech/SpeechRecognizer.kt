@@ -3,10 +3,7 @@ package com.sam.nox.speech
 /**
  * Resultado de uma transcrição de voz.
  */
-data class TranscriptionResult(
-    val text: String,
-    val language: String? = null,
-)
+data class TranscriptionResult(val text: String, val language: String? = null)
 
 /**
  * Reconhecedor de voz offline baseado no Whisper.
@@ -21,10 +18,7 @@ expect class SpeechRecognizer {
      * @param samples amostras de áudio em 16 kHz, mono.
      * @param language código ISO do idioma (ex.: "pt") ou null para detecção automática.
      */
-    suspend fun transcribe(
-        samples: FloatArray,
-        language: String? = null,
-    ): TranscriptionResult
+    suspend fun transcribe(samples: FloatArray, language: String? = null): TranscriptionResult
 
     /** Libera os recursos nativos. */
     fun close()

@@ -1,0 +1,24 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# ktlint — funções @Composable usam PascalCase por convenção do Compose;
+# isenta-as da regra de nomenclatura de função (que exige camelCase).
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Desliga a regra de nome de ficheiro: usamos nomes descritivos por conteúdo
+# (ex.: McpTools.kt agrupa McpManager + config + extensões; main.kt é o entry point).
+ktlint_standard_filename = disabled
+
+# Comentários de bloco no fim de linha são aceitáveis (usamos muito para KDoc/notas).
+# Mantém as demais regras padrão ("standard") ativas.
+ktlint_code_style = intellij_idea

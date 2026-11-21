@@ -4,11 +4,7 @@ import androidx.compose.ui.graphics.Color
 import com.sam.nox.ui.orb.NoxMood
 
 /** Rótulo, dica e cor do ponto de status para cada estado do orbe. */
-internal data class MoodStatus(
-    val label: String,
-    val hint: String,
-    val dot: Color,
-)
+internal data class MoodStatus(val label: String, val hint: String, val dot: Color)
 
 internal fun statusFor(mood: NoxMood): MoodStatus = when (mood) {
     NoxMood.Idle -> MoodStatus("Pronto", "Pergunte qualquer coisa", Color(0xFFA99BFF))
