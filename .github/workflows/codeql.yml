@@ -25,13 +25,19 @@ jobs:
           distribution: 'temurin'
 
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          # O CodeQL instrumenta a compilação pelo tracer; com o cache do Gradle
+          # o build vira UP-TO-DATE e nenhum .kt é recompilado, resultando em
+          # "no source code seen during build". Desativar o cache força a build
+          # real que o CodeQL precisa.
+          cache-disabled: true
 
       - uses: github/codeql-action/init@v3
         with:
           languages: java-kotlin
 
       - name: Build
-        run: ./gradlew :desktopApp:compileKotlin
+        run: ./gradlew :desktopApp:compileKotlin --no-build-cache --rerun-tasks
 
       - uses: github/codeql-action/analyze@v3
         with:
